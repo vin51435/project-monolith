@@ -256,7 +256,7 @@ export default function DayWorkoutView({
 
       {/* 4. WORKOUT EXERCISE CARDS */}
       {!currentDay.isRest && (
-        <div className="space-y-3">
+        <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-indigo-400" />
@@ -272,76 +272,95 @@ export default function DayWorkoutView({
               (d) => d.num === ex.exerciseId || d.name.toLowerCase() === ex.name.toLowerCase()
             );
             const isTargeted = highlightedExerciseNum === ex.num;
+            const match = ex.rest.match(/(\d+)/);
+            const restSec = match ? parseInt(match[1], 10) : 60;
 
             return (
               <div
                 key={ex.num}
                 id={`workout-exercise-${ex.num}`}
-                className={`bg-slate-900 border rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 transition-all shadow-md ${
+                className={`bg-slate-900 border rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 transition-all shadow-md space-y-3 ${
                   isTargeted
-                    ? 'target-highlight bg-slate-900/90'
+                    ? 'target-highlight bg-slate-900/95'
                     : 'border-slate-800 hover:border-slate-700/80'
                 }`}
               >
-                {/* Top: Exercise Number, Name, Form Guide trigger */}
-                <div
-                  onClick={() => {
-                    if (exDetail && onSelectExerciseDetail) {
-                      onSelectExerciseDetail(exDetail);
-                    }
-                  }}
-                  className="flex items-start gap-2.5 sm:gap-3 cursor-pointer group"
-                  title="Click to open form guide"
-                >
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-indigo-600/20 group-hover:bg-indigo-600 group-hover:text-white border border-indigo-500/30 text-indigo-400 font-black text-xs sm:text-sm flex items-center justify-center shrink-0 mt-0.5 transition">
-                    {ex.num}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight flex items-center gap-1">
-                        <span className="truncate">{ex.name}</span>
+                {/* Exercise Header: Number, Name, Target, Form Guide button */}
+                <div className="flex items-start justify-between gap-3">
+                  <div
+                    onClick={() => {
+                      if (exDetail && onSelectExerciseDetail) {
+                        onSelectExerciseDetail(exDetail);
+                      }
+                    }}
+                    className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0 cursor-pointer group"
+                    title="Click to view form guide"
+                  >
+                    <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-600/20 group-hover:bg-indigo-600 group-hover:text-white border border-indigo-500/30 text-indigo-400 font-black text-xs sm:text-sm flex items-center justify-center shrink-0 mt-0.5 transition">
+                      {ex.num}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight">
+                          {ex.name}
+                        </h4>
                         <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                      </h4>
-                      {exDetail && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold rounded-md bg-indigo-950 text-indigo-300 border border-indigo-800/60 shadow-sm shrink-0">
-                          <BookOpen className="w-2.5 h-2.5" /> Guide
-                        </span>
-                      )}
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">
+                        <span className="text-slate-300 font-medium">Target:</span> {ex.target}
+                      </p>
                     </div>
-                    <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">
-                      <span className="text-slate-300 font-semibold">Target:</span> {ex.target}
-                    </p>
                   </div>
-                </div>
 
-                {/* Bottom Row: Reps, Rest, Sets Checkboxes (Never wraps weirdly, handles 4+ sets cleanly) */}
-                <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-                  {/* Left: Reps & Rest Badge */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Reps */}
-                    <div className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">Reps</span>
-                      <span className="text-xs font-black text-white">{ex.reps}</span>
-                    </div>
-
-                    {/* Rest Button with Timer trigger */}
+                  {exDetail && (
                     <button
                       type="button"
                       onClick={() => {
-                        const match = ex.rest.match(/(\d+)/);
-                        const restSec = match ? parseInt(match[1], 10) : 60;
-                        onOpenTimer(restSec, ex.name);
+                        if (onSelectExerciseDetail) {
+                          onSelectExerciseDetail(exDetail);
+                        }
                       }}
-                      className="px-2 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-800/60 flex items-center gap-1 text-indigo-200 active:scale-95 transition"
-                      title="Start rest timer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 shadow-sm shrink-0 transition"
                     >
-                      <Timer className="w-3 h-3 text-indigo-400 shrink-0" />
-                      <span className="text-xs font-bold whitespace-nowrap">{ex.rest}</span>
+                      <BookOpen className="w-3 h-3" /> Form
+                    </button>
+                  )}
+                </div>
+
+                {/* Integrated Metrics & Set Tracker Tray */}
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2">
+                  {/* Top: Target Reps & Rest Timer Button */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Reps:
+                      </span>
+                      <span className="font-bold text-white px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-xs">
+                        {ex.reps}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenTimer(restSec, ex.name)}
+                      className="flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-800/60 text-indigo-300 text-xs font-bold active:scale-95 transition"
+                      title="Click to start rest timer"
+                    >
+                      <Timer className="w-3 h-3 text-indigo-400" />
+                      <span>{ex.rest}</span>
                     </button>
                   </div>
 
-                  {/* Right: Interactive Sets Checklist (S1, S2, S3, S4...) */}
-                  <div className="flex items-center gap-1 shrink-0 ml-auto">
+                  {/* Bottom: Evenly Distributed Interactive Set Buttons */}
+                  <div
+                    className={`grid gap-1.5 ${
+                      ex.sets === 4
+                        ? 'grid-cols-4'
+                        : ex.sets === 3
+                        ? 'grid-cols-3'
+                        : 'grid-cols-2'
+                    }`}
+                  >
                     {Array.from({ length: ex.sets }).map((_, setIdx) => {
                       const setKey = `${currentDay.id}-${ex.num}-${setIdx}`;
                       const isDone = !!completedSets[setKey];
@@ -353,18 +372,18 @@ export default function DayWorkoutView({
                           onClick={() =>
                             toggleSet(currentDay.id, ex.num, setIdx, ex.rest, ex.name)
                           }
-                          className={`flex flex-col items-center justify-center w-8 h-10 sm:w-9 sm:h-11 rounded-lg sm:rounded-xl border font-bold text-xs transition active:scale-90 ${
+                          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl border text-xs font-bold transition active:scale-95 ${
                             isDone
-                              ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-600/20'
-                              : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white'
+                              ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-600/30'
+                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
                           }`}
                           title={`Mark Set ${setIdx + 1} Done`}
                         >
-                          <span className="text-[9px] opacity-70">S{setIdx + 1}</span>
+                          <span>Set {setIdx + 1}</span>
                           {isDone ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current text-white mt-0.5" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                           ) : (
-                            <Circle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 mt-0.5" />
+                            <Circle className="w-3.5 h-3.5 text-slate-600" />
                           )}
                         </button>
                       );
