@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Dumbbell, Timer, Flame, Sparkles, BookOpen, Layers } from 'lucide-react';
+import { Dumbbell, Timer, Flame, Sparkles, BookOpen, Layers, Lock } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onOpenTimer: (seconds?: number, name?: string) => void;
   timerRunning?: boolean;
+  onLock?: () => void;
 }
 
 export default function Header({
@@ -15,6 +16,7 @@ export default function Header({
   setActiveTab,
   onOpenTimer,
   timerRunning = false,
+  onLock,
 }: HeaderProps) {
   const navTabs = [
     { id: 'today', label: 'Workout Plan', icon: Dumbbell },
@@ -70,8 +72,9 @@ export default function Header({
             })}
           </nav>
 
-          {/* Rest Timer Button */}
-          <div className="flex items-center gap-2">
+          {/* Actions: Timer + Lock */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Rest Timer Button */}
             <button
               onClick={() => onOpenTimer(60, 'Rest Interval')}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold border active:scale-95 transition ${
@@ -83,6 +86,17 @@ export default function Header({
               <Timer className="w-3.5 h-3.5" />
               <span>Timer</span>
             </button>
+
+            {/* Lock App Button */}
+            {onLock && (
+              <button
+                onClick={onLock}
+                className="p-1.5 sm:p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition active:scale-95"
+                title="Lock app"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </div>
