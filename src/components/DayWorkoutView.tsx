@@ -300,12 +300,9 @@ export default function DayWorkoutView({
                       {ex.num}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight">
-                          {ex.name}
-                        </h4>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                      </div>
+                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight">
+                        {ex.name}
+                      </h4>
                       <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">
                         <span className="text-slate-300 font-medium">Target:</span> {ex.target}
                       </p>
