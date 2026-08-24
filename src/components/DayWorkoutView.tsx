@@ -12,36 +12,44 @@ import {
   CheckCircle2,
   Circle,
   Timer,
-  Info,
-  ChevronRight,
   Flame,
   Dumbbell,
   Lightbulb,
   Sparkles,
   RefreshCw,
-  BookOpen
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Target,
+  X
 } from 'lucide-react';
 
 interface DayWorkoutViewProps {
   selectedDayId: string;
   setSelectedDayId: (id: string) => void;
   onOpenTimer: (seconds: number, name: string) => void;
-  onSelectExerciseDetail?: (exercise: ExerciseDetail) => void;
-  highlightedExerciseNum?: number | null;
 }
 
 export default function DayWorkoutView({
   selectedDayId,
   setSelectedDayId,
   onOpenTimer,
-  onSelectExerciseDetail,
-  highlightedExerciseNum = null,
 }: DayWorkoutViewProps) {
   // Store completed sets: key format `dayId-exerciseNum-setIndex`
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
+  
+  // Track which exercise cards are expanded inline
+  const [expandedExerciseNum, setExpandedExerciseNum] = useState<number | null>(null);
+
+  // Enlarged Image modal lightbox state
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   const currentDay: WorkoutDay =
     WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
+
+  const toggleExpand = (exNum: number) => {
+    setExpandedExerciseNum((prev) => (prev === exNum ? null : exNum));
+  };
 
   const toggleSet = (dayId: string, exNum: number, setIndex: number, restString: string, exName: string) => {
     const key = `${dayId}-${exNum}-${setIndex}`;
@@ -116,7 +124,10 @@ export default function DayWorkoutView({
             return (
               <button
                 key={day.id}
-                onClick={() => setSelectedDayId(day.id)}
+                onClick={() => {
+                  setSelectedDayId(day.id);
+                  setExpandedExerciseNum(null);
+                }}
                 className={`relative flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-2xl border transition active:scale-95 text-center ${
                   isSelected
                     ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-600/30 font-bold'
@@ -254,16 +265,16 @@ export default function DayWorkoutView({
         </div>
       )}
 
-      {/* 4. WORKOUT EXERCISE CARDS */}
+      {/* 4. WORKOUT EXERCISE CARDS (WITH INLINE DROPDOWN GUIDE) */}
       {!currentDay.isRest && (
         <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-indigo-400" />
-              Prescribed Exercise Sequence ({currentDay.exercises.length} Exercises)
+              Prescribed Sequence ({currentDay.exercises.length} Exercises)
             </h3>
             <span className="text-[11px] sm:text-xs text-indigo-300 font-medium hidden xs:inline">
-              Tap title for form guide
+              Tap card for form guide
             </span>
           </div>
 
@@ -271,7 +282,7 @@ export default function DayWorkoutView({
             const exDetail = EXERCISE_DATABASE.find(
               (d) => d.num === ex.exerciseId || d.name.toLowerCase() === ex.name.toLowerCase()
             );
-            const isTargeted = highlightedExerciseNum === ex.num;
+            const isExpanded = expandedExerciseNum === ex.num;
             const match = ex.rest.match(/(\d+)/);
             const restSec = match ? parseInt(match[1], 10) : 60;
 
@@ -280,28 +291,24 @@ export default function DayWorkoutView({
                 key={ex.num}
                 id={`workout-exercise-${ex.num}`}
                 className={`bg-slate-900 border rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 transition-all shadow-md space-y-3 ${
-                  isTargeted
-                    ? 'target-highlight bg-slate-900/95'
+                  isExpanded
+                    ? 'border-indigo-500/80 ring-1 ring-indigo-500/30'
                     : 'border-slate-800 hover:border-slate-700/80'
                 }`}
               >
-                {/* Exercise Header: Number, Name, Target, Form Guide button */}
+                {/* Exercise Header: Click to Toggle Inline Guide Dropdown */}
                 <div className="flex items-start justify-between gap-3">
                   <div
-                    onClick={() => {
-                      if (exDetail && onSelectExerciseDetail) {
-                        onSelectExerciseDetail(exDetail);
-                      }
-                    }}
+                    onClick={() => toggleExpand(ex.num)}
                     className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0 cursor-pointer group"
-                    title="Click to view form guide"
+                    title={isExpanded ? 'Click to hide details' : 'Click to show form guide'}
                   >
                     <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-600/20 group-hover:bg-indigo-600 group-hover:text-white border border-indigo-500/30 text-indigo-400 font-black text-xs sm:text-sm flex items-center justify-center shrink-0 mt-0.5 transition">
                       {ex.num}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight">
-                        {ex.name}
+                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight flex items-center gap-1.5">
+                        <span className="truncate">{ex.name}</span>
                       </h4>
                       <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">
                         <span className="text-slate-300 font-medium">Target:</span> {ex.target}
@@ -309,20 +316,87 @@ export default function DayWorkoutView({
                     </div>
                   </div>
 
+                  {/* Toggle Dropdown Button */}
                   {exDetail && (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (onSelectExerciseDetail) {
-                          onSelectExerciseDetail(exDetail);
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 shadow-sm shrink-0 transition"
+                      onClick={() => toggleExpand(ex.num)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-xl border shadow-sm shrink-0 transition active:scale-95 ${
+                        isExpanded
+                          ? 'bg-indigo-600 text-white border-indigo-500'
+                          : 'bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border-indigo-800/60'
+                      }`}
                     >
-                      <BookOpen className="w-3 h-3" /> Form
+                      <BookOpen className="w-3 h-3" />
+                      <span>{isExpanded ? 'Hide' : 'Form'}</span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-3 h-3 ml-0.5" />
+                      ) : (
+                        <ChevronDown className="w-3 h-3 ml-0.5" />
+                      )}
                     </button>
                   )}
                 </div>
+
+                {/* INLINE EXPANDED FORM GUIDE DROPDOWN */}
+                {isExpanded && exDetail && (
+                  <div className="pt-3 pb-1 border-t border-slate-800/80 space-y-4 animate-fadeIn">
+                    {/* Demonstration Visual */}
+                    <div
+                      onClick={() => setEnlargedImage(exDetail.image)}
+                      className="relative cursor-pointer group rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 hover:border-indigo-500/50 transition shadow-inner"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={exDetail.image}
+                        alt={exDetail.name}
+                        className="max-h-56 sm:max-h-64 w-auto max-w-full object-contain rounded-xl"
+                        loading="lazy"
+                      />
+                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-900/80 text-[10px] text-slate-300 font-semibold border border-slate-700">
+                        Tap to Enlarge
+                      </span>
+                    </div>
+
+                    {/* Targeted Muscles Breakdown */}
+                    <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 text-xs">
+                      <h5 className="font-bold text-white text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1 text-indigo-400">
+                        <Target className="w-3.5 h-3.5 text-rose-400" />
+                        Targeted Muscles
+                      </h5>
+                      <p className="text-slate-300">
+                        <strong className="text-white">Primary:</strong> {exDetail.primary}
+                      </p>
+                      <p className="text-slate-400 mt-0.5">
+                        <strong className="text-slate-300">Secondary:</strong> {exDetail.secondary}
+                      </p>
+                    </div>
+
+                    {/* How to Perform Instructions */}
+                    <div className="space-y-1.5">
+                      <h5 className="font-bold text-white text-[11px] uppercase tracking-wider text-slate-300">
+                        📋 How to Perform
+                      </h5>
+                      <ol className="space-y-1.5 text-xs text-slate-300 list-decimal list-inside pl-0.5 leading-relaxed">
+                        {exDetail.steps.map((step, idx) => (
+                          <li key={idx} className="marker:text-indigo-400 marker:font-bold">
+                            {step.replace(/<\/?strong>/g, '')}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    {/* Mind-Muscle Cue Card */}
+                    <div className="p-3 rounded-xl bg-emerald-950/40 border-l-4 border-l-emerald-500 border border-slate-800 text-xs">
+                      <strong className="text-emerald-300 block font-bold mb-0.5">
+                        🧠 Mind-Muscle Connection:
+                      </strong>
+                      <p className="text-emerald-100/90 italic leading-relaxed">
+                        &ldquo;{exDetail.cue}&rdquo;
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Integrated Metrics & Set Tracker Tray */}
                 <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2">
@@ -390,6 +464,29 @@ export default function DayWorkoutView({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Enlarged Image Lightbox */}
+      {enlargedImage && (
+        <div
+          onClick={() => setEnlargedImage(null)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+        >
+          <div className="relative max-w-2xl max-h-[85vh] bg-slate-900 p-2 rounded-2xl border border-slate-700 shadow-2xl">
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-3 -right-3 p-1.5 bg-slate-800 text-white rounded-full border border-slate-600 shadow-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={enlargedImage}
+              alt="Enlarged exercise preview"
+              className="max-h-[75vh] w-auto max-w-full rounded-xl object-contain"
+            />
+          </div>
         </div>
       )}
     </div>

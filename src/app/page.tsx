@@ -22,11 +22,8 @@ export default function HomePage() {
   const [timerSeconds, setTimerSeconds] = useState<number>(60);
   const [timerExerciseName, setTimerExerciseName] = useState<string>('');
 
-  // Focused Exercise in Library
+  // Exercise Library Selection State
   const [selectedExerciseDetail, setSelectedExerciseDetail] = useState<ExerciseDetail | null>(null);
-
-  // Return Scroll & Highlight Target
-  const [highlightedExerciseNum, setHighlightedExerciseNum] = useState<number | null>(null);
 
   const currentDay = WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
 
@@ -42,33 +39,10 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleNavigateToExerciseGuide = (exercise: ExerciseDetail) => {
-    setSelectedExerciseDetail(exercise);
-    setActiveTab('library');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleBackToWorkout = (exerciseNum?: number) => {
+  const handleBackToWorkout = () => {
     setActiveTab('today');
     setSelectedExerciseDetail(null);
-
-    const targetNum = exerciseNum || selectedExerciseDetail?.num;
-    if (targetNum) {
-      setHighlightedExerciseNum(targetNum);
-      
-      // Allow tab switch to mount DOM, then scroll smoothly
-      setTimeout(() => {
-        const el = document.getElementById(`workout-exercise-${targetNum}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 120);
-
-      // Clear highlight glow after 3 seconds
-      setTimeout(() => {
-        setHighlightedExerciseNum(null);
-      }, 3000);
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -92,8 +66,6 @@ export default function HomePage() {
             selectedDayId={selectedDayId}
             setSelectedDayId={setSelectedDayId}
             onOpenTimer={handleOpenTimer}
-            onSelectExerciseDetail={handleNavigateToExerciseGuide}
-            highlightedExerciseNum={highlightedExerciseNum}
           />
         )}
 
