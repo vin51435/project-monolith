@@ -14,6 +14,7 @@ import {
   Timer,
   Clock,
   Flag,
+  Watch,
   Minimize2,
   Maximize2,
   Sparkles
@@ -102,9 +103,19 @@ export default function WorkoutTimerModal({
     onTimerStateChange?.(timerIsRunning || stopwatchIsRunning);
   }, [timerIsRunning, stopwatchIsRunning, onTimerStateChange]);
 
-  // Web Audio chime generator
+  // High-impact sports gym alarm chime + haptic vibration (played when rest timer hits 0)
   const playChime = useCallback(() => {
+    // 1. Mobile Haptic Vibration Alert
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([200, 100, 200, 100, 400]);
+      } catch {
+        // Ignore vibration errors
+      }
+    }
+
     if (!soundEnabled || typeof window === 'undefined') return;
+
     try {
       const AudioContextClass =
         window.AudioContext ||
@@ -112,24 +123,41 @@ export default function WorkoutTimerModal({
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
 
+      // Triple energetic sports buzzer alert (0.0s -> 0.2s -> 0.4s)
+      const playBeep = (
+        freq: number,
+        startTime: number,
+        duration: number,
+        isFinal: boolean = false
+      ) => {
+        const osc = ctx.createOscillator();
+        const subOsc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(freq * 1.5, startTime);
+
+        gain.gain.setValueAtTime(0.01, startTime);
+        gain.gain.linearRampToValueAtTime(isFinal ? 0.85 : 0.65, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+        osc.connect(gain);
+        subOsc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(startTime);
+        subOsc.start(startTime);
+        osc.stop(startTime + duration);
+        subOsc.stop(startTime + duration);
+      };
+
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, now); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-      osc.frequency.exponentialRampToValueAtTime(1174.66, now + 0.35); // D6
-
-      gain.gain.setValueAtTime(0.01, now);
-      gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.8);
+      playBeep(880, now, 0.16); // Burst 1: High A5
+      playBeep(1046.5, now + 0.2, 0.16); // Burst 2: High C6
+      playBeep(1318.5, now + 0.4, 0.65, true); // Burst 3 (Grand Finish): E6 ring
     } catch {
       // Audio autoplay policy fallback
     }
@@ -462,7 +490,7 @@ export default function WorkoutTimerModal({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Timer className="w-3.5 h-3.5" />
+            <Timer className="w-4 h-4 shrink-0" />
             <span>Timer</span>
           </button>
 
@@ -474,7 +502,7 @@ export default function WorkoutTimerModal({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Flag className="w-3.5 h-3.5" />
+            <Watch className="w-4 h-4 shrink-0" />
             <span>Stopwatch</span>
           </button>
 
@@ -486,7 +514,7 @@ export default function WorkoutTimerModal({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-4 h-4 shrink-0" />
             <span>Clock</span>
           </button>
         </div>
