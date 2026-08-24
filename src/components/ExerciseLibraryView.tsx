@@ -5,17 +5,14 @@ import { EXERCISE_DATABASE, ExerciseDetail } from '@/data/workoutData';
 import {
   Search,
   Dumbbell,
-  Tag,
   Target,
-  Sparkles,
   Timer,
   X,
   ArrowLeft,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
   Layers,
-  CheckCircle2
+  Sparkles
 } from 'lucide-react';
 
 interface ExerciseLibraryViewProps {
@@ -40,14 +37,14 @@ export default function ExerciseLibraryView({
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   const categories = [
-    { id: 'all', label: 'All 40 Exercises' },
-    { id: 'push', label: 'Push (Chest/Delts/Triceps)' },
-    { id: 'pull', label: 'Pull (Back/Biceps/Rear Delts)' },
+    { id: 'all', label: 'All (40)' },
+    { id: 'push', label: 'Push' },
+    { id: 'pull', label: 'Pull' },
     { id: 'legs-core', label: 'Legs & Core' },
-    { id: 'daily', label: 'Daily Mobility' },
+    { id: 'daily', label: 'Daily' },
   ];
 
-  // If viewing a single selected exercise, find prev and next exercises
+  // Prev / Next exercise for single focused mode
   const prevExercise = useMemo(() => {
     if (!selectedExercise) return null;
     return EXERCISE_DATABASE.find((e) => e.num === selectedExercise.num - 1) || null;
@@ -58,7 +55,7 @@ export default function ExerciseLibraryView({
     return EXERCISE_DATABASE.find((e) => e.num === selectedExercise.num + 1) || null;
   }, [selectedExercise]);
 
-  // When selectedExercise is present, ONLY display that single exercise
+  // When selectedExercise is passed, ONLY display that single exercise
   const displayedExercises = useMemo(() => {
     if (selectedExercise) {
       return [selectedExercise];
@@ -79,114 +76,67 @@ export default function ExerciseLibraryView({
     });
   }, [searchQuery, activeCategory, selectedExercise]);
 
+  // Scroll to top on single exercise change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [selectedExercise]);
+
   return (
-    <div className="space-y-6">
-      {/* 1. Top Action Navigation Bar */}
-      <div className="sticky top-16 sm:top-20 z-30 -mx-3.5 px-3.5 sm:mx-0 sm:px-0 py-1">
-        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-3 sm:p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3">
+    <div className="space-y-4 max-w-3xl mx-auto">
+      {/* 1. Ultra-Clean Sticky Header Bar */}
+      <div className="sticky top-14 sm:top-16 z-30 bg-slate-950/90 backdrop-blur-md py-2">
+        <div className="flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+          {/* Back to Workout button */}
           {onBackToWorkout && (
             <button
               onClick={() => onBackToWorkout(selectedExercise?.num)}
-              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-600/30 active:scale-95 transition shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm active:scale-95 transition shrink-0 shadow-md shadow-indigo-600/25"
             >
               <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
-              <span>Back to {currentWorkoutDayName}</span>
+              <span>Back to Workout</span>
             </button>
           )}
 
+          {/* Right Action: Browse All or Category Title */}
           {selectedExercise ? (
             <button
               onClick={onClearSelectedExercise}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition active:scale-95 shrink-0"
-              title="Show all 40 exercise guides"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition active:scale-95 shrink-0"
+              title="Browse all 40 guides"
             >
               <Layers className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Browse All 40 Guides</span>
+              <span>All Guides (40)</span>
             </button>
           ) : (
-            <span className="text-xs font-semibold text-slate-400 hidden sm:inline">
-              40 Form &amp; Mind-Muscle Guides
+            <span className="text-xs font-bold text-slate-400 px-2">
+              {displayedExercises.length} Guides
             </span>
           )}
         </div>
       </div>
 
-      {/* 2. Focused Single Exercise Banner */}
-      {selectedExercise && (
-        <div className="p-4 rounded-2xl bg-indigo-950/70 border border-indigo-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fadeIn">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 flex items-center justify-center font-black text-xs shrink-0">
-              #{selectedExercise.num}
-            </div>
-            <div>
-              <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-400">
-                Single Focused Form Guide
-              </div>
-              <h3 className="text-sm font-bold text-white">
-                {selectedExercise.name}
-              </h3>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {prevExercise && onSelectExercise && (
-              <button
-                onClick={() => onSelectExercise(prevExercise)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700 transition"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" /> #{prevExercise.num}
-              </button>
-            )}
-            {nextExercise && onSelectExercise && (
-              <button
-                onClick={() => onSelectExercise(nextExercise)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700 transition"
-              >
-                #{nextExercise.num} <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 3. Search & Category Filters (Displayed when viewing all or browsing) */}
+      {/* 2. Filter & Search Controls (Only shown when browsing all) */}
       {!selectedExercise && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-                <Dumbbell className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">
-                  Complete Exercise Execution &amp; Form Guide
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Step-by-step biomechanics, target muscles &amp; mind-muscle cues for all 40 movements
-                </p>
-              </div>
-            </div>
-
-            {/* Search Box */}
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search exercise, muscle, or cue..."
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-2xl pl-10 pr-4 py-2 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition"
-              />
-            </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-lg space-y-3">
+          {/* Search Input */}
+          <div className="relative w-full">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by exercise name, muscle, or cue..."
+              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition"
+            />
           </div>
 
-          {/* Category Pills */}
+          {/* Category Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id as typeof activeCategory)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
+                className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
                   activeCategory === cat.id
                     ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-600/30'
                     : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white'
@@ -199,92 +149,80 @@ export default function ExerciseLibraryView({
         </div>
       )}
 
-      {/* 4. Exercise Card(s) */}
-      <div className="space-y-6">
+      {/* 3. Exercise Card Content */}
+      <div className="space-y-4">
         {displayedExercises.map((ex: ExerciseDetail) => (
           <div
             key={ex.num}
             id={`exercise-guide-${ex.num}`}
-            className="overflow-hidden rounded-3xl bg-slate-900 border-2 border-indigo-600/50 hover:border-indigo-500 shadow-xl transition-all"
+            className="overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 shadow-xl"
           >
-            {/* Card Header (OneNote styled Blue Bar) */}
-            <div className="bg-indigo-600 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-xl bg-white/20 text-white text-xs font-black flex items-center justify-center backdrop-blur-sm">
+            {/* Header */}
+            <div className="bg-indigo-600 px-4 sm:px-5 py-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-6 h-6 rounded-lg bg-white/20 text-white text-xs font-black flex items-center justify-center shrink-0">
                   {ex.num}
                 </span>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">
                   {ex.name}
                 </h3>
               </div>
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-900/80 text-white border border-indigo-400/40 whitespace-nowrap shadow-sm">
-                  {ex.tag}
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-indigo-900/80 text-white border border-indigo-400/30 whitespace-nowrap">
+                  {ex.tag.split('/')[0].trim()}
                 </span>
-
-                {onBackToWorkout && (
-                  <button
-                    onClick={() => onBackToWorkout(ex.num)}
-                    className="flex items-center gap-1 px-3 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition active:scale-95"
-                    title="Return to workout at this exercise"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" /> Back to Workout
-                  </button>
-                )}
-
                 {onOpenTimer && (
                   <button
                     onClick={() => onOpenTimer(60, ex.name)}
-                    className="p-1.5 rounded-lg bg-indigo-800/80 hover:bg-indigo-700 text-white border border-indigo-400/40 transition active:scale-95"
-                    title="Start rest timer for this exercise"
+                    className="p-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white border border-indigo-400/30 transition active:scale-95"
+                    title="Rest Timer"
                   >
-                    <Timer className="w-4 h-4" />
+                    <Timer className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Card Body */}
-            <div className="p-5 sm:p-7 space-y-5 bg-slate-950/60">
+            {/* Body */}
+            <div className="p-4 sm:p-6 space-y-4 bg-slate-950/60">
               {/* Demonstration Visual */}
               <div
                 onClick={() => setEnlargedImage(ex.image)}
-                className="relative cursor-pointer group rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-3 hover:border-indigo-500/50 transition shadow-inner"
+                className="relative cursor-pointer group rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 hover:border-indigo-500/50 transition shadow-inner"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={ex.image}
                   alt={ex.name}
-                  className="max-h-72 w-auto max-w-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-200"
+                  className="max-h-60 sm:max-h-72 w-auto max-w-full object-contain rounded-xl"
                   loading="lazy"
                 />
-                <div className="absolute bottom-2 right-2 px-2 py-1 rounded-lg bg-slate-900/80 backdrop-blur-sm border border-slate-700 text-[10px] text-slate-300 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-900/80 text-[10px] text-slate-300 font-semibold border border-slate-700">
                   Tap to Enlarge
-                </div>
+                </span>
               </div>
 
-              {/* Targeted Muscles breakdown */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs sm:text-sm">
-                <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Target className="w-4 h-4 text-rose-400" />
+              {/* Targeted Muscles */}
+              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs">
+                <h4 className="font-bold text-white text-[11px] uppercase tracking-wider mb-1.5 flex items-center gap-1 text-indigo-400">
+                  <Target className="w-3.5 h-3.5 text-rose-400" />
                   Targeted Muscles
                 </h4>
-                <div className="space-y-1 text-slate-300">
-                  <p>
-                    <strong className="text-indigo-400">Primary:</strong> {ex.primary}
-                  </p>
-                  <p>
-                    <strong className="text-slate-400">Secondary:</strong> {ex.secondary}
-                  </p>
-                </div>
+                <p className="text-slate-300">
+                  <strong className="text-white">Primary:</strong> {ex.primary}
+                </p>
+                <p className="text-slate-400 mt-0.5">
+                  <strong className="text-slate-300">Secondary:</strong> {ex.secondary}
+                </p>
               </div>
 
-              {/* How to Perform Instructions */}
-              <div>
-                <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                  📋 How to Perform (Form &amp; Tempo)
+              {/* Steps */}
+              <div className="space-y-1.5">
+                <h4 className="font-bold text-white text-[11px] uppercase tracking-wider text-slate-300">
+                  📋 How to Perform
                 </h4>
-                <ol className="space-y-2 text-xs sm:text-sm text-slate-300 list-decimal list-inside pl-1 leading-relaxed">
+                <ol className="space-y-1.5 text-xs text-slate-300 list-decimal list-inside pl-0.5 leading-relaxed">
                   {ex.steps.map((step, idx) => (
                     <li key={idx} className="marker:text-indigo-400 marker:font-bold">
                       {step.replace(/<\/?strong>/g, '')}
@@ -293,65 +231,69 @@ export default function ExerciseLibraryView({
                 </ol>
               </div>
 
-              {/* Mind-Muscle Connection Box (Mint Green Card) */}
-              <div className="p-4 rounded-2xl bg-emerald-950/40 border-l-4 border-l-emerald-500 border border-slate-800 text-xs sm:text-sm">
-                <strong className="text-emerald-300 block font-bold mb-1">
-                  🧠 Mind-Muscle Connection (What to Think):
+              {/* Mind-Muscle Cue Card */}
+              <div className="p-3.5 rounded-2xl bg-emerald-950/40 border-l-4 border-l-emerald-500 border border-slate-800 text-xs">
+                <strong className="text-emerald-300 block font-bold mb-0.5">
+                  🧠 Mind-Muscle Connection:
                 </strong>
                 <p className="text-emerald-100/90 italic leading-relaxed">
                   &ldquo;{ex.cue}&rdquo;
                 </p>
               </div>
 
-              {/* Bottom Actions Bar */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-800/80">
-                {selectedExercise && (
-                  <button
-                    onClick={onClearSelectedExercise}
-                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-                  >
-                    <Layers className="w-3.5 h-3.5" /> View all 40 exercise guides
-                  </button>
-                )}
+              {/* Prev / Next Bottom Navigation (In single mode) */}
+              {selectedExercise && onSelectExercise && (
+                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                  {prevExercise ? (
+                    <button
+                      onClick={() => onSelectExercise(prevExercise)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs text-slate-300 font-semibold active:scale-95 transition"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span>#{prevExercise.num} Prev</span>
+                    </button>
+                  ) : <div />}
 
-                {onBackToWorkout && (
-                  <button
-                    onClick={() => onBackToWorkout(ex.num)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-indigo-300 hover:text-white font-bold text-xs active:scale-95 transition ml-auto"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" /> Return to {currentWorkoutDayName}
-                  </button>
-                )}
-              </div>
+                  {nextExercise && (
+                    <button
+                      onClick={() => onSelectExercise(nextExercise)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs text-slate-300 font-semibold active:scale-95 transition"
+                    >
+                      <span>Next #{nextExercise.num}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
 
         {displayedExercises.length === 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 text-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center text-slate-500 text-xs sm:text-sm">
             No exercises found matching &ldquo;{searchQuery}&rdquo;.
           </div>
         )}
       </div>
 
-      {/* Enlarged Image Lightbox Modal */}
+      {/* Enlarged Image Lightbox */}
       {enlargedImage && (
         <div
           onClick={() => setEnlargedImage(null)}
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
         >
-          <div className="relative max-w-3xl max-h-[90vh] bg-slate-900 p-2 rounded-3xl border border-slate-700 shadow-2xl">
+          <div className="relative max-w-2xl max-h-[85vh] bg-slate-900 p-2 rounded-2xl border border-slate-700 shadow-2xl">
             <button
               onClick={() => setEnlargedImage(null)}
-              className="absolute -top-3 -right-3 p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-full border border-slate-600 shadow-lg"
+              className="absolute -top-3 -right-3 p-1.5 bg-slate-800 text-white rounded-full border border-slate-600 shadow-lg"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={enlargedImage}
               alt="Enlarged exercise preview"
-              className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain"
+              className="max-h-[75vh] w-auto max-w-full rounded-xl object-contain"
             />
           </div>
         </div>
