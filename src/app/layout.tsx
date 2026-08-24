@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '6-Day PPL + Night Routine | 6 kg Dumbbell Program',
-  description: 'Complete 6-Day Push/Pull/Legs workout routine designed for 6 kg dumbbells, pull-up bar, and bodyweight. Includes daily night routine, progression guide, glossary, and full execution cues.',
-  keywords: ['PPL workout', '6kg dumbbells', 'pull-up program', 'home workout', 'muscle hypertrophy', 'exercise library'],
-  authors: [{ name: 'Antigravity Fitness' }],
+  title: 'Nexus',
+  description: 'Personal application portal and workspace',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
   },
 };
 
@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#4f46e5',
+  themeColor: '#0f172a',
 };
 
 export default function RootLayout({
