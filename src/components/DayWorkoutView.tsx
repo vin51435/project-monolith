@@ -398,15 +398,15 @@ export default function DayWorkoutView({
                   </div>
                 )}
 
-                {/* Integrated Metrics & Set Tracker Tray */}
-                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2">
-                  {/* Top: Target Reps & Rest Timer Button */}
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5">
+                {/* Integrated Metrics & Set Tracker Tray (Single row on desktop, 2-tier on mobile) */}
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                  {/* Left: Target Reps & Rest Timer Button */}
+                  <div className="flex items-center justify-between sm:justify-start gap-2 text-xs shrink-0">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         Reps:
                       </span>
-                      <span className="font-bold text-white px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-xs">
+                      <span className="font-bold text-white text-xs">
                         {ex.reps}
                       </span>
                     </div>
@@ -414,17 +414,17 @@ export default function DayWorkoutView({
                     <button
                       type="button"
                       onClick={() => onOpenTimer(restSec, ex.name)}
-                      className="flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-800/60 text-indigo-300 text-xs font-bold active:scale-95 transition"
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-800/60 text-indigo-300 text-xs font-bold active:scale-95 transition"
                       title="Click to start rest timer"
                     >
-                      <Timer className="w-3 h-3 text-indigo-400" />
-                      <span>{ex.rest}</span>
+                      <Timer className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Rest {ex.rest}</span>
                     </button>
                   </div>
 
-                  {/* Bottom: Evenly Distributed Interactive Set Buttons */}
+                  {/* Right: Interactive Sets Checklist Buttons (Inline row on sm/desktop, grid on mobile) */}
                   <div
-                    className={`grid gap-1.5 ${
+                    className={`grid gap-1.5 sm:flex sm:items-center ${
                       ex.sets === 4
                         ? 'grid-cols-4'
                         : ex.sets === 3
@@ -443,7 +443,7 @@ export default function DayWorkoutView({
                           onClick={() =>
                             toggleSet(currentDay.id, ex.num, setIdx, ex.rest, ex.name)
                           }
-                          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl border text-xs font-bold transition active:scale-95 ${
+                          className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 sm:px-3.5 rounded-xl border text-xs font-bold transition active:scale-95 sm:min-w-[76px] ${
                             isDone
                               ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-600/30'
                               : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
