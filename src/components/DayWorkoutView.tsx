@@ -19,7 +19,6 @@ import {
   Lightbulb,
   Sparkles,
   RefreshCw,
-  ExternalLink,
   BookOpen
 } from 'lucide-react';
 
@@ -96,7 +95,7 @@ export default function DayWorkoutView({
   const progressPercent = totalSetsCount > 0 ? (completedSetsCount / totalSetsCount) * 100 : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* 1. Day Selector Carousel / Pills */}
       <div className="bg-slate-950/80 p-2 sm:p-3 rounded-3xl border border-slate-800 backdrop-blur-md">
         <div className="flex items-center justify-between px-2 mb-2">
@@ -149,18 +148,18 @@ export default function DayWorkoutView({
       </div>
 
       {/* 2. Active Day Hero Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800 p-5 sm:p-7 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800 p-4 sm:p-7 shadow-xl">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                 DAY {currentDay.dayNumber}
               </span>
-              <span className="text-xs text-slate-400 font-semibold">
+              <span className="text-[11px] sm:text-xs text-slate-400 font-semibold">
                 ~60 Min Workout
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
               {currentDay.title} &mdash; {currentDay.subtitle}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 font-medium flex items-center gap-1.5">
@@ -173,10 +172,10 @@ export default function DayWorkoutView({
           {!currentDay.isRest && (
             <div className="flex items-center sm:flex-col items-start sm:items-end justify-between gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
               <div className="text-left sm:text-right">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Workout Progress
                 </div>
-                <div className="text-lg font-black text-indigo-400">
+                <div className="text-base sm:text-lg font-black text-indigo-400">
                   {completedSetsCount} / {totalSetsCount} Sets ({Math.round(progressPercent)}%)
                 </div>
               </div>
@@ -205,12 +204,12 @@ export default function DayWorkoutView({
 
         {/* Technique Tip Alert */}
         {currentDay.techniqueTip && (
-          <div className="relative z-10 mt-5 p-3.5 sm:p-4 rounded-2xl bg-indigo-950/60 border border-indigo-500/30 flex items-start gap-3">
+          <div className="relative z-10 mt-4 p-3 sm:p-4 rounded-2xl bg-indigo-950/60 border border-indigo-500/30 flex items-start gap-2.5 sm:gap-3">
             <div className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 shrink-0 mt-0.5">
               <Lightbulb className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-indigo-200 uppercase tracking-wider">
+              <h4 className="text-[11px] sm:text-xs font-bold text-indigo-200 uppercase tracking-wider">
                 6 kg Key Technique
               </h4>
               <p className="text-xs sm:text-sm text-indigo-100/90 mt-0.5">
@@ -255,16 +254,16 @@ export default function DayWorkoutView({
         </div>
       )}
 
-      {/* 4. WORKOUT EXERCISE CARDS / LIST */}
+      {/* 4. WORKOUT EXERCISE CARDS */}
       {!currentDay.isRest && (
-        <div className="space-y-3.5">
+        <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-indigo-400" />
               Prescribed Exercise Sequence ({currentDay.exercises.length} Exercises)
             </h3>
-            <span className="text-xs text-indigo-300 font-medium">
-              Tap title or guide for form cues
+            <span className="text-[11px] sm:text-xs text-indigo-300 font-medium hidden xs:inline">
+              Tap title for form guide
             </span>
           </div>
 
@@ -278,115 +277,98 @@ export default function DayWorkoutView({
               <div
                 key={ex.num}
                 id={`workout-exercise-${ex.num}`}
-                className={`bg-slate-900 border rounded-3xl p-4 sm:p-5 transition-all shadow-md ${
+                className={`bg-slate-900 border rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 transition-all shadow-md ${
                   isTargeted
                     ? 'target-highlight bg-slate-900/90'
                     : 'border-slate-800 hover:border-slate-700/80'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
-                  {/* Left: Clickable Exercise Index, Title, Form Guide Trigger */}
-                  <div
-                    onClick={() => {
-                      if (exDetail && onSelectExerciseDetail) {
-                        onSelectExerciseDetail(exDetail);
-                      }
-                    }}
-                    className="flex items-start gap-3 cursor-pointer group flex-1"
-                    title="Click to open full form guide"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-indigo-600/20 group-hover:bg-indigo-600 group-hover:text-white border border-indigo-500/30 text-indigo-400 font-black text-sm flex items-center justify-center shrink-0 mt-0.5 transition">
-                      {ex.num}
+                {/* Top: Exercise Number, Name, Form Guide trigger */}
+                <div
+                  onClick={() => {
+                    if (exDetail && onSelectExerciseDetail) {
+                      onSelectExerciseDetail(exDetail);
+                    }
+                  }}
+                  className="flex items-start gap-2.5 sm:gap-3 cursor-pointer group"
+                  title="Click to open form guide"
+                >
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-indigo-600/20 group-hover:bg-indigo-600 group-hover:text-white border border-indigo-500/30 text-indigo-400 font-black text-xs sm:text-sm flex items-center justify-center shrink-0 mt-0.5 transition">
+                    {ex.num}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight flex items-center gap-1">
+                        <span className="truncate">{ex.name}</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      </h4>
+                      {exDetail && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold rounded-md bg-indigo-950 text-indigo-300 border border-indigo-800/60 shadow-sm shrink-0">
+                          <BookOpen className="w-2.5 h-2.5" /> Guide
+                        </span>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight flex items-center gap-1.5">
-                          <span>{ex.name}</span>
-                          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
-                        </h4>
-                        {exDetail && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onSelectExerciseDetail) {
-                                onSelectExerciseDetail(exDetail);
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800/60 hover:bg-indigo-900 transition shadow-sm"
-                          >
-                            <BookOpen className="w-3 h-3" /> Form Guide
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">
-                        <span className="text-slate-300 font-semibold">Target:</span> {ex.target}
-                      </p>
+                    <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">
+                      <span className="text-slate-300 font-semibold">Target:</span> {ex.target}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Reps, Rest, Sets Checkboxes (Never wraps weirdly, handles 4+ sets cleanly) */}
+                <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                  {/* Left: Reps & Rest Badge */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Reps */}
+                    <div className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Reps</span>
+                      <span className="text-xs font-black text-white">{ex.reps}</span>
                     </div>
+
+                    {/* Rest Button with Timer trigger */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const match = ex.rest.match(/(\d+)/);
+                        const restSec = match ? parseInt(match[1], 10) : 60;
+                        onOpenTimer(restSec, ex.name);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-800/60 flex items-center gap-1 text-indigo-200 active:scale-95 transition"
+                      title="Start rest timer"
+                    >
+                      <Timer className="w-3 h-3 text-indigo-400 shrink-0" />
+                      <span className="text-xs font-bold whitespace-nowrap">{ex.rest}</span>
+                    </button>
                   </div>
 
-                  {/* Right: Reps, Rest, Sets Checkboxes */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
-                    {/* Reps & Rest Target Pills */}
-                    <div className="flex items-center gap-2">
-                      <div className="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                        <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                          Reps
-                        </span>
-                        <span className="text-xs font-bold text-white">
-                          {ex.reps}
-                        </span>
-                      </div>
+                  {/* Right: Interactive Sets Checklist (S1, S2, S3, S4...) */}
+                  <div className="flex items-center gap-1 shrink-0 ml-auto">
+                    {Array.from({ length: ex.sets }).map((_, setIdx) => {
+                      const setKey = `${currentDay.id}-${ex.num}-${setIdx}`;
+                      const isDone = !!completedSets[setKey];
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const match = ex.rest.match(/(\d+)/);
-                          const restSec = match ? parseInt(match[1], 10) : 60;
-                          onOpenTimer(restSec, ex.name);
-                        }}
-                        className="px-2.5 py-1 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-800/60 text-center active:scale-95 transition"
-                        title="Click to start rest timer"
-                      >
-                        <span className="block text-[9px] font-bold text-indigo-300 uppercase tracking-wider flex items-center justify-center gap-0.5">
-                          <Timer className="w-2.5 h-2.5" /> Rest
-                        </span>
-                        <span className="text-xs font-bold text-indigo-200">
-                          {ex.rest}
-                        </span>
-                      </button>
-                    </div>
-
-                    {/* Interactive Sets Checklist Buttons */}
-                    <div className="flex items-center gap-1.5">
-                      {Array.from({ length: ex.sets }).map((_, setIdx) => {
-                        const setKey = `${currentDay.id}-${ex.num}-${setIdx}`;
-                        const isDone = !!completedSets[setKey];
-
-                        return (
-                          <button
-                            key={setIdx}
-                            type="button"
-                            onClick={() =>
-                              toggleSet(currentDay.id, ex.num, setIdx, ex.rest, ex.name)
-                            }
-                            className={`flex flex-col items-center justify-center w-9 h-11 rounded-xl border font-bold text-xs transition active:scale-90 ${
-                              isDone
-                                ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/20'
-                                : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white'
-                            }`}
-                            title={`Mark Set ${setIdx + 1} Done`}
-                          >
-                            <span className="text-[9px] opacity-70">S{setIdx + 1}</span>
-                            {isDone ? (
-                              <CheckCircle2 className="w-4 h-4 fill-current text-white mt-0.5" />
-                            ) : (
-                              <Circle className="w-4 h-4 text-slate-600 mt-0.5" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <button
+                          key={setIdx}
+                          type="button"
+                          onClick={() =>
+                            toggleSet(currentDay.id, ex.num, setIdx, ex.rest, ex.name)
+                          }
+                          className={`flex flex-col items-center justify-center w-8 h-10 sm:w-9 sm:h-11 rounded-lg sm:rounded-xl border font-bold text-xs transition active:scale-90 ${
+                            isDone
+                              ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-600/20'
+                              : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white'
+                          }`}
+                          title={`Mark Set ${setIdx + 1} Done`}
+                        >
+                          <span className="text-[9px] opacity-70">S{setIdx + 1}</span>
+                          {isDone ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current text-white mt-0.5" />
+                          ) : (
+                            <Circle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 mt-0.5" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
