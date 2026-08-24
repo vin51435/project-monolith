@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Lock, Delete, ArrowRight } from 'lucide-react';
+import { Lock, Delete } from 'lucide-react';
 
 interface AuthLockProps {
   onUnlock: () => void;
 }
 
-const PASSCODE = '51435';
+const PASSCODE = process.env.NEXT_PUBLIC_APP_PASSCODE || '51435';
+const PASSCODE_LENGTH = PASSCODE.length;
 
 export default function AuthLock({ onUnlock }: AuthLockProps) {
   const [pin, setPin] = useState<string>('');
@@ -39,9 +40,9 @@ export default function AuthLock({ onUnlock }: AuthLockProps) {
   const handleKeyPress = (digit: string) => {
     setErrorMsg('');
     const next = pin + digit;
-    if (next.length <= 5) {
+    if (next.length <= PASSCODE_LENGTH) {
       setPin(next);
-      if (next.length === 5) {
+      if (next.length === PASSCODE_LENGTH) {
         checkPin(next);
       }
     }
@@ -59,7 +60,7 @@ export default function AuthLock({ onUnlock }: AuthLockProps) {
         handleKeyPress(e.key);
       } else if (e.key === 'Backspace') {
         handleDelete();
-      } else if (e.key === 'Enter' && pin.length === 5) {
+      } else if (e.key === 'Enter' && pin.length === PASSCODE_LENGTH) {
         checkPin(pin);
       }
     };
@@ -85,13 +86,13 @@ export default function AuthLock({ onUnlock }: AuthLockProps) {
           </p>
         </div>
 
-        {/* 5 Passcode Dots */}
+        {/* Passcode Dots */}
         <div
           className={`flex items-center gap-3 py-2 transition-transform ${
             shake ? 'animate-bounce text-rose-500' : ''
           }`}
         >
-          {[0, 1, 2, 3, 4].map((idx) => {
+          {Array.from({ length: PASSCODE_LENGTH }).map((_, idx) => {
             const isFilled = pin.length > idx;
             return (
               <div
