@@ -15,7 +15,7 @@ import Footer from '@/components/Footer';
 import { ExerciseDetail, WORKOUT_DAYS } from '@/data/workoutData';
 
 export default function HomePage() {
-  const [isLocked, setIsLocked] = useState<boolean>(true);
+  const [authState, setAuthState] = useState<'checking' | 'unlocked' | 'locked'>('checking');
   const [activeTab, setActiveTab] = useState<string>('today');
   const [selectedDayId, setSelectedDayId] = useState<string>('day-1');
 
@@ -31,19 +31,23 @@ export default function HomePage() {
 
   // Check saved session on mount
   useEffect(() => {
-    const isRemembered = localStorage.getItem('nexus_auth_session') === 'active';
-    const isSessionActive = sessionStorage.getItem('nexus_auth_session') === 'active';
-    if (isRemembered || isSessionActive) {
-      setIsLocked(false);
-    } else {
-      setIsLocked(true);
+    try {
+      const isRemembered = localStorage.getItem('nexus_auth_session') === 'active';
+      const isSessionActive = sessionStorage.getItem('nexus_auth_session') === 'active';
+      if (isRemembered || isSessionActive) {
+        setAuthState('unlocked');
+      } else {
+        setAuthState('locked');
+      }
+    } catch {
+      setAuthState('locked');
     }
   }, []);
 
   const handleLockApp = () => {
     localStorage.removeItem('nexus_auth_session');
     sessionStorage.removeItem('nexus_auth_session');
-    setIsLocked(true);
+    setAuthState('locked');
   };
 
   const handleOpenTimer = (seconds: number = 60, name: string = '') => {
@@ -64,13 +68,20 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (isLocked) {
-    return <AuthLock onUnlock={() => setIsLocked(false)} />;
+  // 1. Initial seamless loading state (prevents lock screen flash)
+  if (authState === 'checking') {
+    return <div className="min-h-screen bg-slate-950" />;
   }
 
+  // 2. Locked state
+  if (authState === 'locked') {
+    return <AuthLock onUnlock={() => setAuthState('unlocked')} />;
+  }
+
+  // 3. Unlocked App View
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      {/* 1. Sticky Navigation Header */}
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 animate-fadeIn">
+      {/* Sticky Navigation Header */}
       <Header
         activeTab={activeTab}
         setActiveTab={(tab) => {
@@ -83,7 +94,7 @@ export default function HomePage() {
         onLock={handleLockApp}
       />
 
-      {/* 2. Main Body Container */}
+      {/* Main Body Container */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-3.5 sm:px-6 py-5 sm:py-8 space-y-8">
         {activeTab === 'today' && (
           <DayWorkoutView
@@ -115,7 +126,7 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* 3. Floating Rest Timer Modal */}
+      {/* Floating Rest Timer Modal */}
       <RestTimerModal
         isOpen={isTimerOpen}
         onClose={() => setIsTimerOpen(false)}
@@ -123,7 +134,7 @@ export default function HomePage() {
         exerciseName={timerExerciseName}
       />
 
-      {/* 4. Mobile Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar */}
       <BottomNav
         activeTab={activeTab}
         setActiveTab={(tab) => {
@@ -134,7 +145,7 @@ export default function HomePage() {
         }}
       />
 
-      {/* 5. Footer */}
+      {/* Footer */}
       <Footer />
     </div>
   );
