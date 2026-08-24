@@ -74,17 +74,25 @@ export default function Header({
 
           {/* Actions: Timer + Lock */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Rest Timer Button */}
+            {/* Rest Timer Button - Fully Illuminated when active */}
             <button
               onClick={() => onOpenTimer(60, 'Rest Interval')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold border active:scale-95 transition ${
+              className={`relative flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-black border active:scale-95 transition-all duration-300 ${
                 timerRunning
-                  ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse shadow-md shadow-amber-500/25'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 border-emerald-300 shadow-lg shadow-emerald-500/40 animate-pulse ring-2 ring-emerald-400/50'
                   : 'bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border-indigo-500/40'
               }`}
             >
-              <Timer className="w-3.5 h-3.5" />
+              <Timer className={`w-3.5 h-3.5 ${timerRunning ? 'text-slate-950' : 'text-indigo-400'}`} />
               <span>Timer</span>
+
+              {/* Radiant Ping Indicator */}
+              {timerRunning && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-90"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white border border-emerald-600 shadow-sm"></span>
+                </span>
+              )}
             </button>
 
             {/* Lock App Button */}

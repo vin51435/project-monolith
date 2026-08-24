@@ -21,6 +21,8 @@ export default function HomePage() {
 
   // Timer / Stopwatch / Clock Suite State
   const [isTimerOpen, setIsTimerOpen] = useState<boolean>(false);
+  const [isTimerMinimized, setIsTimerMinimized] = useState<boolean>(false);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [timerSeconds, setTimerSeconds] = useState<number>(60);
   const [timerExerciseName, setTimerExerciseName] = useState<string>('');
 
@@ -54,6 +56,20 @@ export default function HomePage() {
     setTimerSeconds(seconds);
     setTimerExerciseName(name);
     setIsTimerOpen(true);
+    setIsTimerMinimized(false);
+  };
+
+  const handleHeaderTimerClick = () => {
+    if (!isTimerOpen) {
+      setIsTimerOpen(true);
+      setIsTimerMinimized(false);
+    } else if (isTimerMinimized) {
+      // If minimized, clicking header button maximizes the modal!
+      setIsTimerMinimized(false);
+    } else {
+      // If already maximized, minimize it
+      setIsTimerMinimized(true);
+    }
   };
 
   const handleSelectDayFromSchedule = (dayId: string) => {
@@ -90,7 +106,8 @@ export default function HomePage() {
             setSelectedExerciseDetail(null);
           }
         }}
-        onOpenTimer={handleOpenTimer}
+        onOpenTimer={handleHeaderTimerClick}
+        timerRunning={isTimerRunning}
         onLock={handleLockApp}
       />
 
@@ -129,9 +146,19 @@ export default function HomePage() {
       {/* Integrated Workout Timer, Stopwatch & Clock Modal Suite */}
       <WorkoutTimerModal
         isOpen={isTimerOpen}
-        onClose={() => setIsTimerOpen(false)}
+        isMinimized={isTimerMinimized}
+        setIsMinimized={setIsTimerMinimized}
+        onOpen={() => {
+          setIsTimerOpen(true);
+          setIsTimerMinimized(false);
+        }}
+        onClose={() => {
+          setIsTimerOpen(false);
+          setIsTimerMinimized(false);
+        }}
         initialSeconds={timerSeconds}
         exerciseName={timerExerciseName}
+        onTimerStateChange={setIsTimerRunning}
       />
 
       {/* Mobile Bottom Navigation Bar */}

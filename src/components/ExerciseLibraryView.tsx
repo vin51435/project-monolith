@@ -189,7 +189,7 @@ export default function ExerciseLibraryView({
               {/* Demonstration Visual */}
               <div
                 onClick={() => setEnlargedImage(ex.image)}
-                className="relative cursor-pointer group rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 hover:border-indigo-500/50 transition shadow-inner"
+                className="relative cursor-pointer group rounded-2xl overflow-hidden bg-white border border-slate-700/80 flex items-center justify-center p-2.5 hover:border-indigo-500/80 transition shadow-inner"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -198,7 +198,7 @@ export default function ExerciseLibraryView({
                   className="max-h-60 sm:max-h-72 w-auto max-w-full object-contain rounded-xl"
                   loading="lazy"
                 />
-                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-900/80 text-[10px] text-slate-300 font-semibold border border-slate-700">
+                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-900/90 text-[10px] text-slate-200 font-semibold border border-slate-700 shadow-sm">
                   Tap to Enlarge
                 </span>
               </div>
@@ -282,10 +282,10 @@ export default function ExerciseLibraryView({
           onClick={() => setEnlargedImage(null)}
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
         >
-          <div className="relative max-w-2xl max-h-[85vh] bg-slate-900 p-2 rounded-2xl border border-slate-700 shadow-2xl">
+          <div className="relative max-w-2xl max-h-[85vh] bg-white p-3 rounded-3xl border border-slate-700 shadow-2xl">
             <button
               onClick={() => setEnlargedImage(null)}
-              className="absolute -top-3 -right-3 p-1.5 bg-slate-800 text-white rounded-full border border-slate-600 shadow-lg"
+              className="absolute -top-3 -right-3 p-1.5 bg-slate-900 text-white rounded-full border border-slate-700 shadow-xl hover:bg-slate-800 transition"
             >
               <X className="w-4 h-4" />
             </button>
@@ -293,7 +293,7 @@ export default function ExerciseLibraryView({
             <img
               src={enlargedImage}
               alt="Enlarged exercise preview"
-              className="max-h-[75vh] w-auto max-w-full rounded-xl object-contain"
+              className="max-h-[75vh] w-auto max-w-full rounded-2xl object-contain"
             />
           </div>
         </div>

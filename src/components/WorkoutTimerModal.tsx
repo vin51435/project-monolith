@@ -28,19 +28,30 @@ interface LapItem {
 interface WorkoutTimerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpen?: () => void;
   initialSeconds?: number;
   exerciseName?: string;
+  onTimerStateChange?: (isActive: boolean) => void;
+  isMinimized?: boolean;
+  setIsMinimized?: (minimized: boolean) => void;
 }
 
 export default function WorkoutTimerModal({
   isOpen,
   onClose,
+  onOpen,
   initialSeconds = 60,
   exerciseName = '',
+  onTimerStateChange,
+  isMinimized: controlledMinimized,
+  setIsMinimized: setControlledMinimized,
 }: WorkoutTimerModalProps) {
   // Mode selection: 'timer' | 'stopwatch' | 'clock'
   const [activeMode, setActiveMode] = useState<'timer' | 'stopwatch' | 'clock'>('timer');
-  const [isMinimized, setIsMinimized] = useState<boolean>(false);
+  const [internalMinimized, setInternalMinimized] = useState<boolean>(false);
+
+  const isMinimized = controlledMinimized !== undefined ? controlledMinimized : internalMinimized;
+  const setIsMinimized = setControlledMinimized || setInternalMinimized;
 
   // --------------------------------------------------------------------------
   // 1. COUNTDOWN TIMER STATE
@@ -68,16 +79,28 @@ export default function WorkoutTimerModal({
   const [sessionSec, setSessionSec] = useState<number>(0);
   const [sessionRunning, setSessionRunning] = useState<boolean>(true);
 
-  // Sync external initialSeconds trigger
+  // Prevent auto-start on first load
+  const isFirstMount = useRef(true);
+
+  // Sync external initialSeconds trigger when modal opens (ready in paused state)
   useEffect(() => {
-    if (initialSeconds > 0) {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    if (isOpen && initialSeconds > 0) {
       setTimerTotalSec(initialSeconds);
       setTimerRemainingSec(initialSeconds);
-      setTimerIsRunning(true);
+      setTimerIsRunning(false);
       setActiveMode('timer');
       setIsMinimized(false);
     }
-  }, [initialSeconds, exerciseName]);
+  }, [isOpen, initialSeconds, exerciseName]);
+
+  // Notify parent of active running state
+  useEffect(() => {
+    onTimerStateChange?.(timerIsRunning || stopwatchIsRunning);
+  }, [timerIsRunning, stopwatchIsRunning, onTimerStateChange]);
 
   // Web Audio chime generator
   const playChime = useCallback(() => {
@@ -247,8 +270,13 @@ export default function WorkoutTimerModal({
   if (!isOpen && !isBackgroundActive) return null;
 
   // --------------------------------------------------------------------------
-  // FLOATING MINI-WIDGET (WHEN MINIMIZED OR CLOSED WHILE RUNNING)
+  // FLOATING MINI-WIDGET (WHEN MINIMIZED OR CLOSED WHILE ACTIVE)
   // --------------------------------------------------------------------------
+  const handleMaximize = () => {
+    setIsMinimized(false);
+    onOpen?.();
+  };
+
   if (!isOpen || isMinimized) {
     if (!isBackgroundActive && !isOpen) return null;
 
@@ -257,42 +285,117 @@ export default function WorkoutTimerModal({
     const swTime = formatStopwatch(stopwatchMs);
 
     return (
-      <div className="fixed bottom-16 right-4 sm:bottom-6 sm:right-6 z-50 animate-bounce-short">
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-900/95 border border-indigo-500/60 shadow-2xl backdrop-blur-md text-white">
-          {timerIsRunning && (
-            <button
-              onClick={() => {
-                setActiveMode('timer');
-                setIsMinimized(false);
-              }}
-              className="flex items-center gap-2 hover:text-indigo-300 transition"
-            >
-              <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping" />
-              <span className="text-xs font-black font-mono">
-                ⏱ {String(timerMin).padStart(2, '0')}:{String(timerSec).padStart(2, '0')}
-              </span>
-            </button>
-          )}
-
-          {stopwatchIsRunning && !timerIsRunning && (
-            <button
-              onClick={() => {
-                setActiveMode('stopwatch');
-                setIsMinimized(false);
-              }}
-              className="flex items-center gap-2 hover:text-indigo-300 transition"
-            >
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-              <span className="text-xs font-black font-mono">
-                ⏱ {swTime.minutes}:{swTime.seconds}.{swTime.hundredths}
-              </span>
-            </button>
-          )}
-
+      <div className="fixed bottom-20 right-3.5 sm:bottom-6 sm:right-6 z-50 animate-fadeIn">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-slate-900/95 border border-indigo-500/70 shadow-2xl backdrop-blur-md text-white ring-1 ring-indigo-500/30">
+          {/* Main Time Display Clickable Area */}
           <button
-            onClick={() => setIsMinimized(false)}
-            className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 ml-1 transition"
-            title="Expand Timer"
+            type="button"
+            onClick={handleMaximize}
+            className="flex items-center gap-2 hover:opacity-80 transition group"
+            title="Click to maximize timer"
+          >
+            {activeMode === 'timer' && (
+              <>
+                <span className="relative flex h-2.5 w-2.5">
+                  {timerIsRunning ? (
+                    <>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </>
+                  ) : (
+                    <span className="inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                  )}
+                </span>
+                <span
+                  className={`text-xs font-black font-mono tracking-tight ${
+                    timerRemainingSec <= 5 && timerRemainingSec > 0
+                      ? 'text-rose-400 animate-pulse'
+                      : 'text-white'
+                  }`}
+                >
+                  ⏱ {String(timerMin).padStart(2, '0')}:{String(timerSec).padStart(2, '0')}
+                </span>
+              </>
+            )}
+
+            {activeMode === 'stopwatch' && (
+              <>
+                <span className="relative flex h-2.5 w-2.5">
+                  {stopwatchIsRunning ? (
+                    <>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                    </>
+                  ) : (
+                    <span className="inline-flex rounded-full h-2.5 w-2.5 bg-slate-500"></span>
+                  )}
+                </span>
+                <span className="text-xs font-black font-mono text-indigo-300">
+                  ⏱ {swTime.minutes}:{swTime.seconds}.{swTime.hundredths}
+                </span>
+              </>
+            )}
+
+            {activeMode === 'clock' && (
+              <>
+                <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-xs font-bold font-mono text-white">
+                  {currentTime
+                    ? currentTime.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '--:--'}
+                </span>
+              </>
+            )}
+          </button>
+
+          {/* Quick Play/Pause Control */}
+          {activeMode === 'timer' && (
+            <button
+              type="button"
+              onClick={toggleTimerRun}
+              className={`p-1 rounded-lg border transition active:scale-90 ${
+                timerIsRunning
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                  : 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40 hover:bg-emerald-600/40'
+              }`}
+              title={timerIsRunning ? 'Pause' : 'Start'}
+            >
+              {timerIsRunning ? (
+                <Pause className="w-3 h-3 fill-current" />
+              ) : (
+                <Play className="w-3 h-3 fill-current ml-0.5" />
+              )}
+            </button>
+          )}
+
+          {activeMode === 'stopwatch' && (
+            <button
+              type="button"
+              onClick={toggleStopwatchRun}
+              className={`p-1 rounded-lg border transition active:scale-90 ${
+                stopwatchIsRunning
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                  : 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40 hover:bg-emerald-600/40'
+              }`}
+              title={stopwatchIsRunning ? 'Stop' : 'Start'}
+            >
+              {stopwatchIsRunning ? (
+                <Pause className="w-3 h-3 fill-current" />
+              ) : (
+                <Play className="w-3 h-3 fill-current ml-0.5" />
+              )}
+            </button>
+          )}
+
+          {/* Maximize Button */}
+          <button
+            type="button"
+            onClick={handleMaximize}
+            className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+            title="Maximize Suite"
           >
             <Maximize2 className="w-3.5 h-3.5" />
           </button>
@@ -315,52 +418,23 @@ export default function WorkoutTimerModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-6 shadow-2xl text-white space-y-4">
-        {/* Top Bar: Mode Switcher & Controls */}
+        {/* Top Header: Title & Action Controls */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          {/* Mode Tabs */}
-          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setActiveMode('timer')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                activeMode === 'timer'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Timer className="w-3.5 h-3.5" />
-              <span>Timer</span>
-            </button>
-
-            <button
-              onClick={() => setActiveMode('stopwatch')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                activeMode === 'stopwatch'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Flag className="w-3.5 h-3.5" />
-              <span>Stopwatch</span>
-            </button>
-
-            <button
-              onClick={() => setActiveMode('clock')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                activeMode === 'clock'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Clock</span>
-            </button>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+              <Timer className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white tracking-tight">Workout Timer Suite</h3>
+              <p className="text-[10px] text-slate-400 font-medium">Countdown &bull; Chronometer &bull; Clock</p>
+            </div>
           </div>
 
-          {/* Minimize / Close */}
-          <div className="flex items-center gap-1">
+          {/* Minimize & Close Action Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setIsMinimized(true)}
-              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition active:scale-95"
               title="Minimize to floating widget"
             >
               <Minimize2 className="w-4 h-4" />
@@ -370,12 +444,51 @@ export default function WorkoutTimerModal({
                 setIsMinimized(false);
                 onClose();
               }}
-              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition active:scale-95"
               title="Close"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
+        </div>
+
+        {/* Mode Switcher Tabs (3 equal columns - guaranteed zero overflow on any screen) */}
+        <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800">
+          <button
+            onClick={() => setActiveMode('timer')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition active:scale-95 ${
+              activeMode === 'timer'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Timer className="w-3.5 h-3.5" />
+            <span>Timer</span>
+          </button>
+
+          <button
+            onClick={() => setActiveMode('stopwatch')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition active:scale-95 ${
+              activeMode === 'stopwatch'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Flag className="w-3.5 h-3.5" />
+            <span>Stopwatch</span>
+          </button>
+
+          <button
+            onClick={() => setActiveMode('clock')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition active:scale-95 ${
+              activeMode === 'clock'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Clock</span>
+          </button>
         </div>
 
         {/* ===================================================================

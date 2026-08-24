@@ -109,7 +109,7 @@ export const WORKOUT_DAYS: WorkoutDay[] = [
       { num: 4, name: "Bent-Over Rear Delt Fly", sets: 3, reps: "15–25", rest: "45 sec", target: "Rear delts, upper back", exerciseId: 15 },
       { num: 5, name: "Dumbbell Curls", sets: 3, reps: "12–20", rest: "60 sec", target: "Biceps", exerciseId: 16 },
       { num: 6, name: "Hammer Curls", sets: 2, reps: "12–20", rest: "60 sec", target: "Brachialis, forearms", exerciseId: 17 },
-      { num: 7, name: "Dead Hang", sets: 2, reps: "20–45 sec", rest: "60 sec", target: "Grip, forearms", exerciseId: 39 },
+      { num: 7, name: "Dead Hang", sets: 2, reps: "20–45 sec", rest: "60 sec", target: "Grip, forearms", exerciseId: 40 },
     ],
     techniqueTip: "Pull-up Progression: If you can already do 10+ clean reps, use a slower descent (3 sec) or pause at the top.",
   },
@@ -143,9 +143,10 @@ export const WORKOUT_DAYS: WorkoutDay[] = [
       { num: 2, name: "Dumbbell Floor Chest Fly", sets: 3, reps: "15–20", rest: "60 sec", target: "Chest", exerciseId: 9 },
       { num: 3, name: "Dumbbell Shoulder Press", sets: 2, reps: "15–20", rest: "60 sec", target: "Front & side delts", exerciseId: 3 },
       { num: 4, name: "Dumbbell Lateral Raise", sets: 3, reps: "15–25", rest: "45 sec", target: "Side delts", exerciseId: 4 },
-      { num: 5, name: "Incline Dumbbell Y-Raise", sets: 2, reps: "15–20", rest: "45 sec", target: "Upper back, scapular stabilizers", exerciseId: 10 },
-      { num: 6, name: "Diamond Push-Ups", sets: 2, reps: "12–25", rest: "60 sec", target: "Triceps, chest", exerciseId: 11 },
-      { num: 7, name: "Overhead Dumbbell Triceps Extension", sets: 2, reps: "15–20", rest: "60 sec", target: "Triceps", exerciseId: 6 },
+      { num: 5, name: "Dumbbell Front Raise", sets: 3, reps: "12–18", rest: "45 sec", target: "Front delts, upper chest", exerciseId: 42 },
+      { num: 6, name: "Incline Dumbbell Y-Raise", sets: 2, reps: "15–20", rest: "45 sec", target: "Upper back, scapular stabilizers", exerciseId: 10 },
+      { num: 7, name: "Diamond Push-Ups", sets: 2, reps: "12–25", rest: "60 sec", target: "Triceps, chest", exerciseId: 11 },
+      { num: 8, name: "Overhead Dumbbell Triceps Extension", sets: 2, reps: "15–20", rest: "60 sec", target: "Triceps", exerciseId: 6 },
     ],
   },
   {
@@ -180,8 +181,9 @@ export const WORKOUT_DAYS: WorkoutDay[] = [
       { num: 4, name: "Single-Leg Calf Raise", sets: 3, reps: "15–25 / leg", rest: "45 sec", target: "Calves", exerciseId: 35 },
       { num: 5, name: "Side Plank", sets: 2, reps: "30–45 sec / side", rest: "45 sec", target: "Obliques, QL", exerciseId: 36 },
       { num: 6, name: "Weighted Russian Twist", sets: 2, reps: "15–20 / side", rest: "45 sec", target: "Obliques", exerciseId: 37 },
-      { num: 7, name: "Dead Bug", sets: 2, reps: "10–15 / side", rest: "45 sec", target: "Deep core", exerciseId: 38 },
-      { num: 8, name: "Chin Tucks", sets: 2, reps: "10–15", rest: "30 sec", target: "Deep neck flexors", exerciseId: 40 },
+      { num: 7, name: "Standing Dumbbell Oblique Crunch", sets: 2, reps: "12–15 / side", rest: "45 sec", target: "Internal & external obliques, side abs", exerciseId: 38 },
+      { num: 8, name: "Dead Bug", sets: 2, reps: "10–15 / side", rest: "45 sec", target: "Deep core", exerciseId: 39 },
+      { num: 9, name: "Chin Tucks", sets: 2, reps: "10–15", rest: "30 sec", target: "Deep neck flexors", exerciseId: 41 },
     ],
   },
   {
@@ -938,6 +940,23 @@ export const EXERCISE_DATABASE: ExerciseDetail[] = [
   },
   {
     num: 38,
+    name: "Standing Dumbbell Oblique Crunch",
+    tag: "Core B / Lateral Oblique Flexion",
+    category: "legs-core",
+    categoryLabel: "Legs & Core Movements (Quads, Hamstrings, Glutes, Abs & Calves)",
+    image: "/exercise images/Standing Dumbbell Oblique Crunch.jpg",
+    primary: "Internal & External Obliques, Quadratus Lumborum (QL)",
+    secondary: "Rectus Abdominis, Forearm Grip",
+    steps: [
+      "Stand tall holding a 6 kg dumbbell in one hand at your side, placing your opposite hand behind your head.",
+      "Keeping your hips square and chest facing forward, slowly lower the dumbbell down the side of your thigh toward your knee.",
+      "Feel the deep stretch in your opposite side oblique, then contract that oblique forcefully to pull your torso upright and slightly past vertical.",
+      "Pause for 1 second at peak contraction, complete all reps, then switch hands."
+    ],
+    cue: "Imagine you are standing between two narrow glass walls. Do not lean forward or twist—crunch directly sideways using your side waist."
+  },
+  {
+    num: 39,
     name: "Dead Bug (Anti-Extension Core)",
     tag: "Core B / Deep Core & Spine Stability",
     category: "legs-core",
@@ -956,7 +975,7 @@ export const EXERCISE_DATABASE: ExerciseDetail[] = [
 
   // DAILY POSTURE & MOBILITY
   {
-    num: 39,
+    num: 40,
     name: "Dead Hang",
     tag: "Daily / Grip & Spinal Decompression",
     category: "daily",
@@ -972,7 +991,7 @@ export const EXERCISE_DATABASE: ExerciseDetail[] = [
     cue: "Breathe deeply into your belly and feel every vertebra in your spine opening up and lengthening. Keep a vice-like grip with your fingers."
   },
   {
-    num: 40,
+    num: 41,
     name: "Chin Tucks",
     tag: "Daily / Posture & Deep Neck Flexors",
     category: "daily",
@@ -987,5 +1006,22 @@ export const EXERCISE_DATABASE: ExerciseDetail[] = [
       "Release smoothly and repeat for 10–15 reps."
     ],
     cue: "Imagine a string pulling the crown of your head straight up toward the sky while sliding your chin horizontally back into your neck. Never look down."
+  },
+  {
+    num: 42,
+    name: "Dumbbell Front Raise",
+    tag: "Push B / Anterior Deltoid Isolation",
+    category: "push",
+    categoryLabel: "Push Movements (Chest, Shoulders & Triceps)",
+    image: "/exercise images/dumbbell-seated-front-raise.jpg",
+    primary: "Anterior Deltoids (Front Shoulders)",
+    secondary: "Clavicular Head of Pectoralis Major (Upper Chest), Serratus Anterior",
+    steps: [
+      "Stand tall holding 6 kg dumbbells resting against the front of your thighs with knuckles facing forward or neutral hammer grip.",
+      "Brace your core and raise the dumbbells straight forward and slightly outward with elbows soft and fixed.",
+      "Lift smoothly until dumbbells reach eye level / parallel to the floor.",
+      "Pause for 1 second at the peak to squeeze the front deltoids, then lower under strict control for 2–3 seconds."
+    ],
+    cue: "Pour the weight outward and forward. Do not swing your hips or arch your lower back—keep your torso locked like stone and isolate the front cap of the shoulder."
   }
 ];
