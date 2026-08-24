@@ -20,7 +20,7 @@ import {
   Sparkles,
   RefreshCw,
   ExternalLink,
-  ChevronDown
+  BookOpen
 } from 'lucide-react';
 
 interface DayWorkoutViewProps {
@@ -28,6 +28,7 @@ interface DayWorkoutViewProps {
   setSelectedDayId: (id: string) => void;
   onOpenTimer: (seconds: number, name: string) => void;
   onSelectExerciseDetail?: (exercise: ExerciseDetail) => void;
+  highlightedExerciseNum?: number | null;
 }
 
 export default function DayWorkoutView({
@@ -35,11 +36,10 @@ export default function DayWorkoutView({
   setSelectedDayId,
   onOpenTimer,
   onSelectExerciseDetail,
+  highlightedExerciseNum = null,
 }: DayWorkoutViewProps) {
   // Store completed sets: key format `dayId-exerciseNum-setIndex`
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
-  // Expanded inline exercise details
-  const [expandedExerciseId, setExpandedExerciseId] = useState<number | null>(null);
 
   const currentDay: WorkoutDay =
     WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
@@ -228,7 +228,7 @@ export default function DayWorkoutView({
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-7 h-7" />
             </div>
-            <h3 className="text-xl font-bold text-white">Full Recovery & Regeneration Day</h3>
+            <h3 className="text-xl font-bold text-white">Full Recovery &amp; Regeneration Day</h3>
             <p className="text-sm text-slate-400 max-w-md mx-auto mt-2">
               Muscles grow during recovery, not while working out. Keep today active with light movement, clean hydration, and quality sleep.
             </p>
@@ -255,7 +255,7 @@ export default function DayWorkoutView({
         </div>
       )}
 
-      {/* 4. WORKOUT EXERCISE CARDS / TABLE */}
+      {/* 4. WORKOUT EXERCISE CARDS / LIST */}
       {!currentDay.isRest && (
         <div className="space-y-3.5">
           <div className="flex items-center justify-between px-1">
@@ -263,8 +263,8 @@ export default function DayWorkoutView({
               <Dumbbell className="w-4 h-4 text-indigo-400" />
               Prescribed Exercise Sequence ({currentDay.exercises.length} Exercises)
             </h3>
-            <span className="text-xs text-slate-400">
-              Tap sets to log & start timer
+            <span className="text-xs text-indigo-300 font-medium">
+              Tap title or guide for form cues
             </span>
           </div>
 
@@ -272,41 +272,55 @@ export default function DayWorkoutView({
             const exDetail = EXERCISE_DATABASE.find(
               (d) => d.num === ex.exerciseId || d.name.toLowerCase() === ex.name.toLowerCase()
             );
-            const isExpanded = expandedExerciseId === ex.num;
+            const isTargeted = highlightedExerciseNum === ex.num;
 
             return (
               <div
                 key={ex.num}
-                className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-3xl p-4 sm:p-5 transition-all shadow-md"
+                id={`workout-exercise-${ex.num}`}
+                className={`bg-slate-900 border rounded-3xl p-4 sm:p-5 transition-all shadow-md ${
+                  isTargeted
+                    ? 'target-highlight bg-slate-900/90'
+                    : 'border-slate-800 hover:border-slate-700/80'
+                }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  {/* Left: Exercise Index, Name, Target */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 font-black text-sm flex items-center justify-center shrink-0 mt-0.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+                  {/* Left: Clickable Exercise Index, Title, Form Guide Trigger */}
+                  <div
+                    onClick={() => {
+                      if (exDetail && onSelectExerciseDetail) {
+                        onSelectExerciseDetail(exDetail);
+                      }
+                    }}
+                    className="flex items-start gap-3 cursor-pointer group flex-1"
+                    title="Click to open full form guide"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-indigo-600/20 group-hover:bg-indigo-600 group-hover:text-white border border-indigo-500/30 text-indigo-400 font-black text-sm flex items-center justify-center shrink-0 mt-0.5 transition">
                       {ex.num}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-base font-bold text-white tracking-tight">
-                          {ex.name}
+                        <h4 className="text-base font-bold text-white group-hover:text-indigo-400 transition tracking-tight flex items-center gap-1.5">
+                          <span>{ex.name}</span>
+                          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
                         </h4>
                         {exDetail && (
                           <button
-                            onClick={() => {
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (onSelectExerciseDetail) {
                                 onSelectExerciseDetail(exDetail);
-                              } else {
-                                setExpandedExerciseId(isExpanded ? null : ex.num);
                               }
                             }}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800/60 hover:bg-indigo-900 transition"
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800/60 hover:bg-indigo-900 transition shadow-sm"
                           >
-                            <Info className="w-3 h-3" /> Form Guide
+                            <BookOpen className="w-3 h-3" /> Form Guide
                           </button>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        <span className="text-slate-300 font-medium">Target:</span> {ex.target}
+                      <p className="text-xs text-slate-400 mt-1">
+                        <span className="text-slate-300 font-semibold">Target:</span> {ex.target}
                       </p>
                     </div>
                   </div>
@@ -325,6 +339,7 @@ export default function DayWorkoutView({
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => {
                           const match = ex.rest.match(/(\d+)/);
                           const restSec = match ? parseInt(match[1], 10) : 60;
@@ -351,6 +366,7 @@ export default function DayWorkoutView({
                         return (
                           <button
                             key={setIdx}
+                            type="button"
                             onClick={() =>
                               toggleSet(currentDay.id, ex.num, setIdx, ex.rest, ex.name)
                             }
@@ -373,46 +389,6 @@ export default function DayWorkoutView({
                     </div>
                   </div>
                 </div>
-
-                {/* Inline Exercise Details (Expandable) */}
-                {isExpanded && exDetail && (
-                  <div className="mt-4 pt-4 border-t border-slate-800/80 animate-fadeIn">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Image Preview */}
-                      <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={exDetail.image}
-                          alt={exDetail.name}
-                          className="w-full h-auto max-h-48 object-contain rounded-xl"
-                          loading="lazy"
-                        />
-                      </div>
-
-                      {/* Execution Steps & Cue */}
-                      <div className="md:col-span-2 space-y-3">
-                        <div>
-                          <h5 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">
-                            📋 Step-by-Step Technique
-                          </h5>
-                          <ol className="space-y-1 text-xs text-slate-300 list-decimal list-inside">
-                            {exDetail.steps.map((step, sIdx) => (
-                              <li key={sIdx} className="leading-relaxed">
-                                {step.replace(/<\/?strong>/g, '')}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-
-                        {/* Mind-Muscle Cue */}
-                        <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-xs text-emerald-200">
-                          <strong className="text-emerald-300">🧠 Mind-Muscle Cue: </strong>
-                          <em>&ldquo;{exDetail.cue}&rdquo;</em>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}

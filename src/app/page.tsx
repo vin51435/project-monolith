@@ -11,7 +11,7 @@ import GlossaryView from '@/components/GlossaryView';
 import ExerciseLibraryView from '@/components/ExerciseLibraryView';
 import RestTimerModal from '@/components/RestTimerModal';
 import Footer from '@/components/Footer';
-import { ExerciseDetail } from '@/data/workoutData';
+import { ExerciseDetail, WORKOUT_DAYS } from '@/data/workoutData';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<string>('today');
@@ -24,6 +24,11 @@ export default function HomePage() {
 
   // Focused Exercise in Library
   const [selectedExerciseDetail, setSelectedExerciseDetail] = useState<ExerciseDetail | null>(null);
+
+  // Return Scroll & Highlight Target
+  const [highlightedExerciseNum, setHighlightedExerciseNum] = useState<number | null>(null);
+
+  const currentDay = WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
 
   const handleOpenTimer = (seconds: number = 60, name: string = '') => {
     setTimerSeconds(seconds);
@@ -41,6 +46,29 @@ export default function HomePage() {
     setSelectedExerciseDetail(exercise);
     setActiveTab('library');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToWorkout = (exerciseNum?: number) => {
+    setActiveTab('today');
+    setSelectedExerciseDetail(null);
+
+    const targetNum = exerciseNum || selectedExerciseDetail?.num;
+    if (targetNum) {
+      setHighlightedExerciseNum(targetNum);
+      
+      // Allow tab switch to mount DOM, then scroll smoothly
+      setTimeout(() => {
+        const el = document.getElementById(`workout-exercise-${targetNum}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 120);
+
+      // Clear highlight glow after 3 seconds
+      setTimeout(() => {
+        setHighlightedExerciseNum(null);
+      }, 3000);
+    }
   };
 
   return (
@@ -65,6 +93,7 @@ export default function HomePage() {
             setSelectedDayId={setSelectedDayId}
             onOpenTimer={handleOpenTimer}
             onSelectExerciseDetail={handleNavigateToExerciseGuide}
+            highlightedExerciseNum={highlightedExerciseNum}
           />
         )}
 
@@ -83,6 +112,8 @@ export default function HomePage() {
             onOpenTimer={handleOpenTimer}
             selectedExercise={selectedExerciseDetail}
             onClearSelectedExercise={() => setSelectedExerciseDetail(null)}
+            onBackToWorkout={handleBackToWorkout}
+            currentWorkoutDayName={`Day ${currentDay.dayNumber} (${currentDay.title})`}
           />
         )}
       </main>

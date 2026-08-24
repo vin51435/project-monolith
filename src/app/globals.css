@@ -46,3 +46,25 @@ button, a {
 .timer-pulse {
   animation: timerPulse 1s ease-in-out infinite;
 }
+
+/* Target card glow pulse when returning from guide */
+@keyframes targetHighlight {
+  0% {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4);
+    transform: scale(1.015);
+  }
+  70% {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    transform: scale(1);
+  }
+  100% {
+    border-color: #334155;
+    box-shadow: none;
+    transform: scale(1);
+  }
+}
+.target-highlight {
+  animation: targetHighlight 2.5s ease-out forwards;
+}
