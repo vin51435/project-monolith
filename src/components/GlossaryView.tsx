@@ -59,8 +59,8 @@ export default function GlossaryView() {
           </div>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+        {/* Category Pills with Visible Horizontal Scrollbar */}
+        <div className="flex items-center gap-1.5 custom-scrollbar-x pb-2.5">
           {categories.map((cat) => (
             <button
               key={cat.id}

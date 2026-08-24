@@ -16,7 +16,7 @@
   }
 }
 
-/* Custom Sleek Dark-Themed Scrollbar (WebKit: Chrome, Edge, Safari) */
+/* Global Vertical & Default Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -42,38 +42,33 @@
   background: #6366f1;
 }
 
-/* Custom Thin Scrollbar for internal overflow containers */
-.custom-scrollbar {
+/* Dedicated Visible Horizontal Scrollbar (Mobile Brave, Chrome, Safari & Desktop) */
+.custom-scrollbar-x {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: #4f46e5 #090d16;
+  scrollbar-color: #6366f1 #1e293b;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+.custom-scrollbar-x::-webkit-scrollbar {
+  height: 6px !important;
+  width: 6px !important;
+  display: block !important;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
-  border-radius: 9999px;
+.custom-scrollbar-x::-webkit-scrollbar-track {
+  background: #1e293b !important;
+  border-radius: 9999px !important;
+  margin: 0 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4f46e5;
-  border-radius: 9999px;
+.custom-scrollbar-x::-webkit-scrollbar-thumb {
+  background: #6366f1 !important;
+  border-radius: 9999px !important;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6366f1;
-}
-
-/* Hide scrollbar utility */
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
+.custom-scrollbar-x::-webkit-scrollbar-thumb:hover {
+  background: #818cf8 !important;
 }
 
 /* Mobile Touch Optimizations */

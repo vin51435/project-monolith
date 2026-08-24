@@ -130,8 +130,8 @@ export default function ExerciseLibraryView({
             />
           </div>
 
-          {/* Category Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {/* Category Chips with Visible Horizontal Scrollbar */}
+          <div className="flex items-center gap-1.5 custom-scrollbar-x pb-2">
             {categories.map((cat) => (
               <button
                 key={cat.id}
