@@ -112,6 +112,7 @@ export default function HomePage() {
             onOpenTimer={handleOpenTimer}
             selectedExercise={selectedExerciseDetail}
             onClearSelectedExercise={() => setSelectedExerciseDetail(null)}
+            onSelectExercise={(ex) => setSelectedExerciseDetail(ex)}
             onBackToWorkout={handleBackToWorkout}
             currentWorkoutDayName={`Day ${currentDay.dayNumber} (${currentDay.title})`}
           />
