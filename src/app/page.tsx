@@ -9,7 +9,7 @@ import NightRoutineView from '@/components/NightRoutineView';
 import ProgressionView from '@/components/ProgressionView';
 import GlossaryView from '@/components/GlossaryView';
 import ExerciseLibraryView from '@/components/ExerciseLibraryView';
-import RestTimerModal from '@/components/RestTimerModal';
+import WorkoutTimerModal from '@/components/WorkoutTimerModal';
 import AuthLock from '@/components/AuthLock';
 import Footer from '@/components/Footer';
 import { ExerciseDetail, WORKOUT_DAYS } from '@/data/workoutData';
@@ -19,7 +19,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<string>('today');
   const [selectedDayId, setSelectedDayId] = useState<string>('day-1');
 
-  // Rest Timer State
+  // Timer / Stopwatch / Clock Suite State
   const [isTimerOpen, setIsTimerOpen] = useState<boolean>(false);
   const [timerSeconds, setTimerSeconds] = useState<number>(60);
   const [timerExerciseName, setTimerExerciseName] = useState<string>('');
@@ -126,8 +126,8 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Floating Rest Timer Modal */}
-      <RestTimerModal
+      {/* Integrated Workout Timer, Stopwatch & Clock Modal Suite */}
+      <WorkoutTimerModal
         isOpen={isTimerOpen}
         onClose={() => setIsTimerOpen(false)}
         initialSeconds={timerSeconds}
