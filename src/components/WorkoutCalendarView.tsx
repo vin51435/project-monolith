@@ -53,15 +53,15 @@ export default function WorkoutCalendarView() {
   }, []);
 
   // Save history helper
-  const saveHistory = (newHistory: Record<string, WorkoutHistoryEntry>) => {
+  const saveHistory = React.useCallback((newHistory: Record<string, WorkoutHistoryEntry>) => {
     setHistory(newHistory);
     try {
       localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(newHistory));
     } catch {}
-  };
+  }, []);
 
-  // Calculate Streak
-  const calculateStreak = () => {
+  // Calculate Streak (Memoized)
+  const currentStreak = React.useMemo(() => {
     let streak = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -81,10 +81,9 @@ export default function WorkoutCalendarView() {
       }
     }
     return streak;
-  };
+  }, [history]);
 
-  const totalWorkoutsCount = Object.keys(history).length;
-  const currentStreak = calculateStreak();
+  const totalWorkoutsCount = React.useMemo(() => Object.keys(history).length, [history]);
 
   // Calendar calculations
   const year = currentMonthDate.getFullYear();
@@ -98,23 +97,24 @@ export default function WorkoutCalendarView() {
   const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 is Sun
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const prevMonth = () => {
-    setCurrentMonthDate(new Date(year, month - 1, 1));
-  };
+  const prevMonth = React.useCallback(() => {
+    setCurrentMonthDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  }, []);
 
-  const nextMonth = () => {
-    setCurrentMonthDate(new Date(year, month + 1, 1));
-  };
+  const nextMonth = React.useCallback(() => {
+    setCurrentMonthDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  }, []);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = React.useMemo(() => new Date().toISOString().split('T')[0], []);
 
-  // Count workouts in current viewed month
+  // Count workouts in current viewed month (Memoized)
   const thisMonthKeyPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-  const thisMonthWorkoutsCount = Object.keys(history).filter((k) =>
-    k.startsWith(thisMonthKeyPrefix)
-  ).length;
+  const thisMonthWorkoutsCount = React.useMemo(
+    () => Object.keys(history).filter((k) => k.startsWith(thisMonthKeyPrefix)).length,
+    [history, thisMonthKeyPrefix]
+  );
 
-  const handleManualLog = () => {
+  const handleManualLog = React.useCallback(() => {
     const targetDay = WORKOUT_DAYS.find((d) => d.id === manualDayId) || WORKOUT_DAYS[0];
     const totalSets = targetDay.exercises
       ? targetDay.exercises.reduce((acc, ex) => acc + ex.sets, 0)
@@ -134,21 +134,25 @@ export default function WorkoutCalendarView() {
     const updated = { ...history, [selectedDateStr]: newEntry };
     saveHistory(updated);
     setShowManualLogModal(false);
-  };
+  }, [manualDayId, selectedDateStr, history, saveHistory]);
 
-  const handleDeleteEntry = (dateKey: string) => {
+  const handleDeleteEntry = React.useCallback((dateKey: string) => {
     if (window.confirm(`Remove workout log for ${dateKey}?`)) {
       const updated = { ...history };
       delete updated[dateKey];
       saveHistory(updated);
     }
-  };
+  }, [history, saveHistory]);
 
   const selectedEntry = history[selectedDateStr];
 
-  // Recent history sorted descending
-  const recentLogs = Object.values(history).sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  // Recent history sorted descending (Memoized)
+  const recentLogs = React.useMemo(
+    () =>
+      Object.values(history).sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      ),
+    [history]
   );
 
   return (

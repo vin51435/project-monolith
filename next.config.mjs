@@ -6,6 +6,15 @@ const nextConfig = {
   },
   trailingSlash: true,
   reactStrictMode: true,
+  poweredByHeader: false,
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? {
+            exclude: ['error', 'warn'],
+          }
+        : false,
+  },
 };
 
 export default nextConfig;

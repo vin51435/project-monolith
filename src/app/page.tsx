@@ -1,19 +1,50 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import DayWorkoutView from '@/components/DayWorkoutView';
-import WeeklyScheduleView from '@/components/WeeklyScheduleView';
-import NightRoutineView from '@/components/NightRoutineView';
-import ProgressionView from '@/components/ProgressionView';
-import GlossaryView from '@/components/GlossaryView';
-import ExerciseLibraryView from '@/components/ExerciseLibraryView';
-import WorkoutTimerModal from '@/components/WorkoutTimerModal';
-import SettingsView from '@/components/SettingsView';
 import AuthLock from '@/components/AuthLock';
 import Footer from '@/components/Footer';
 import { ExerciseDetail, WORKOUT_DAYS, EXERCISE_DATABASE } from '@/data/workoutData';
+
+// Code-split secondary views for fast first-paint
+const NightRoutineView = dynamic(() => import('@/components/NightRoutineView'), {
+  loading: () => (
+    <div className="min-h-[300px] flex items-center justify-center text-slate-500 text-xs sm:text-sm animate-pulse">
+      Loading Night Routine...
+    </div>
+  ),
+});
+
+const ProgressionView = dynamic(() => import('@/components/ProgressionView'), {
+  loading: () => (
+    <div className="min-h-[300px] flex items-center justify-center text-slate-500 text-xs sm:text-sm animate-pulse">
+      Loading Calendar &amp; Streaks...
+    </div>
+  ),
+});
+
+const ExerciseLibraryView = dynamic(() => import('@/components/ExerciseLibraryView'), {
+  loading: () => (
+    <div className="min-h-[300px] flex items-center justify-center text-slate-500 text-xs sm:text-sm animate-pulse">
+      Loading 40 Exercise Guides...
+    </div>
+  ),
+});
+
+const SettingsView = dynamic(() => import('@/components/SettingsView'), {
+  loading: () => (
+    <div className="min-h-[300px] flex items-center justify-center text-slate-500 text-xs sm:text-sm animate-pulse">
+      Loading App Preferences...
+    </div>
+  ),
+});
+
+const WorkoutTimerModal = dynamic(() => import('@/components/WorkoutTimerModal'), {
+  ssr: false,
+});
 
 export default function HomePage() {
   const [authState, setAuthState] = useState<'checking' | 'unlocked' | 'locked'>('checking');
@@ -210,8 +241,6 @@ export default function HomePage() {
         {activeTab === 'night' && <NightRoutineView />}
 
         {activeTab === 'progression' && <ProgressionView />}
-
-        {activeTab === 'glossary' && <GlossaryView />}
 
         {activeTab === 'library' && (
           <ExerciseLibraryView
