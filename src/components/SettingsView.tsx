@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from "react";
 import {
@@ -14,7 +14,9 @@ import {
   Play,
   Database,
   Info,
+  CheckCheck,
 } from "lucide-react";
+import { WORKOUT_DAYS } from "@/data/workoutData";
 
 interface SettingsViewProps {
   currentDayId: string;
@@ -108,6 +110,66 @@ export default function SettingsView({
       playBeep(880, now, 0.15);
       playBeep(1046.5, now + 0.18, 0.15);
       playBeep(1318.5, now + 0.36, 0.6, true);
+    } catch {}
+  };
+
+  const handleCompleteToday = () => {
+    try {
+      const targetDay =
+        WORKOUT_DAYS.find((d) => d.id === currentDayId) || WORKOUT_DAYS[0];
+      const STORAGE_KEY = "nexus_completed_sets_v1";
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : { sets: {} };
+      const currentSets = parsed.sets || {};
+
+      let totalSets = 0;
+      if (targetDay.exercises) {
+        targetDay.exercises.forEach((ex) => {
+          for (let i = 0; i < ex.sets; i++) {
+            currentSets[`${targetDay.id}-${ex.num}-${i}`] = true;
+            totalSets++;
+          }
+        });
+      }
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          timestamp: Date.now(),
+          sets: currentSets,
+        }),
+      );
+
+      // Record 100% completion in Workout Calendar History
+      const todayStr = new Date().toISOString().split("T")[0];
+      const HISTORY_KEY = "nexus_workout_history_v1";
+      const rawHistory = localStorage.getItem(HISTORY_KEY);
+      const history = rawHistory ? JSON.parse(rawHistory) : {};
+
+      history[todayStr] = {
+        date: todayStr,
+        dayId: targetDay.id,
+        dayNumber: targetDay.dayNumber,
+        dayTitle: targetDay.title,
+        completedSetsCount: totalSets,
+        totalSetsCount: totalSets,
+        timestamp: Date.now(),
+        notes: "Marked 100% complete via Settings",
+      };
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+      // Update count state
+      setStoredSetsCount(Object.values(currentSets).filter(Boolean).length);
+
+      // Dispatch event to update active views
+      window.dispatchEvent(
+        new CustomEvent("nexus_reset_progress", {
+          detail: { dayId: currentDayId, action: "complete" },
+        }),
+      );
+
+      setResetFeedback(`All ${totalSets} sets for ${targetDay.title} marked complete! 🎉`);
+      setTimeout(() => setResetFeedback(null), 3500);
     } catch {}
   };
 
@@ -210,19 +272,37 @@ export default function SettingsView({
         </div>
       )}
 
-      {/* SECTION 1: WORKOUT RESET CONTROLS */}
+      {/* SECTION 1: WORKOUT PROGRESS & RESET CONTROLS */}
       <div className="p-5 sm:p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <RotateCcw className="w-4 h-4 text-indigo-400" />
+            <CheckCheck className="w-4 h-4 text-indigo-400" />
             <h3 className="text-sm sm:text-base font-bold text-white">
-              Workout Reset Options
+              Workout Progress Actions
             </h3>
           </div>
-          <span className="text-xs text-slate-400">Progress Management</span>
+          <span className="text-xs text-slate-400">Routine Controls</span>
         </div>
 
         <div className="space-y-3">
+          {/* Complete Today */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-700/60 transition">
+            <div>
+              <p className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Complete Today&apos;s Routine</span>
+              </p>
+              <p className="text-xs text-slate-400">{currentDayTitle} &bull; Marks all sets 100% done</p>
+            </div>
+            <button
+              onClick={handleCompleteToday}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 text-xs font-bold transition active:scale-95 self-start sm:self-auto"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Complete Today</span>
+            </button>
+          </div>
+
           {/* Reset Today */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition">
             <div>

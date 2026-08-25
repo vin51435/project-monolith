@@ -51,6 +51,33 @@ export default function DayWorkoutView({
   const currentDay: WorkoutDay =
     WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
 
+  const resetDayProgress = React.useCallback((dayId: string) => {
+    setCompletedSets((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((k) => {
+        if (k.startsWith(`${dayId}-`)) {
+          delete next[k];
+        }
+      });
+      try {
+        if (Object.keys(next).length === 0) {
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              timestamp: Date.now(),
+              sets: next,
+            })
+          );
+        }
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  }, []);
+
   // 1. Load saved sets on initial mount (persists up to 16 hours of inactivity)
   useEffect(() => {
     try {
@@ -71,10 +98,21 @@ export default function DayWorkoutView({
     }
   }, []);
 
-  // 2. Listen for reset events from Settings modal
+  // 2. Listen for reset / complete events from Settings
   useEffect(() => {
     const handleResetEvent = (e: Event) => {
-      const customEvent = e as CustomEvent<{ dayId?: string }>;
+      const customEvent = e as CustomEvent<{ dayId?: string; action?: string }>;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.sets) {
+            setCompletedSets(parsed.sets);
+            return;
+          }
+        }
+      } catch {}
+
       if (customEvent.detail?.dayId) {
         resetDayProgress(customEvent.detail.dayId);
       } else {
@@ -86,7 +124,7 @@ export default function DayWorkoutView({
     };
     window.addEventListener('nexus_reset_progress', handleResetEvent);
     return () => window.removeEventListener('nexus_reset_progress', handleResetEvent);
-  }, []);
+  }, [resetDayProgress]);
 
   // 3. Persist completed sets whenever they are updated
   useEffect(() => {
@@ -195,33 +233,6 @@ export default function DayWorkoutView({
       onOpenTimer(restSec, exName, true, true);
     }
   }, [completedSets, onOpenTimer]);
-
-  const resetDayProgress = React.useCallback((dayId: string) => {
-    setCompletedSets((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((k) => {
-        if (k.startsWith(`${dayId}-`)) {
-          delete next[k];
-        }
-      });
-      try {
-        if (Object.keys(next).length === 0) {
-          localStorage.removeItem(STORAGE_KEY);
-        } else {
-          localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-              timestamp: Date.now(),
-              sets: next,
-            })
-          );
-        }
-      } catch {
-        // Ignore storage errors
-      }
-      return next;
-    });
-  }, []);
 
   const getDayCompletedCount = React.useCallback((day: WorkoutDay) => {
     if (day.isRest || !day.exercises) return 0;
