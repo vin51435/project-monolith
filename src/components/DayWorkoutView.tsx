@@ -8,6 +8,7 @@ import {
   EXERCISE_DATABASE,
   ExerciseDetail
 } from '@/data/workoutData';
+import { formatLocalDateKey } from '@/components/WorkoutCalendarView';
 import {
   CheckCircle2,
   Circle,
@@ -77,6 +78,37 @@ export default function DayWorkoutView({
       return next;
     });
   }, []);
+
+  const getDayCompletedCount = React.useCallback((day: WorkoutDay) => {
+    if (day.isRest || !day.exercises) return 0;
+    let count = 0;
+    day.exercises.forEach((ex) => {
+      for (let i = 0; i < ex.sets; i++) {
+        if (completedSets[`${day.id}-${ex.num}-${i}`]) {
+          count++;
+        }
+      }
+    });
+    return count;
+  }, [completedSets]);
+
+  const getDayTotalSets = React.useCallback((day: WorkoutDay) => {
+    if (day.isRest || !day.exercises) return 0;
+    return day.exercises.reduce((acc, ex) => acc + ex.sets, 0);
+  }, []);
+
+  const completedSetsCount = React.useMemo(
+    () => getDayCompletedCount(currentDay),
+    [getDayCompletedCount, currentDay]
+  );
+  const totalSetsCount = React.useMemo(
+    () => getDayTotalSets(currentDay),
+    [getDayTotalSets, currentDay]
+  );
+  const progressPercent = React.useMemo(
+    () => (totalSetsCount > 0 ? (completedSetsCount / totalSetsCount) * 100 : 0),
+    [completedSetsCount, totalSetsCount]
+  );
 
   // 1. Load saved sets on initial mount (persists up to 16 hours of inactivity)
   useEffect(() => {
@@ -153,7 +185,7 @@ export default function DayWorkoutView({
       const todayCount = getDayCompletedCount(currentDay);
       const totalSets = getDayTotalSets(currentDay);
       if (todayCount > 0) {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = formatLocalDateKey(new Date());
         const HISTORY_KEY = 'nexus_workout_history_v1';
         const raw = localStorage.getItem(HISTORY_KEY);
         const history = raw ? JSON.parse(raw) : {};
@@ -172,7 +204,7 @@ export default function DayWorkoutView({
     } catch {
       // Ignore storage write errors
     }
-  }, [completedSets, isStorageLoaded, currentDay]);
+  }, [completedSets, isStorageLoaded, currentDay, getDayCompletedCount, getDayTotalSets]);
 
   // 5. Log & finalize calendar session when rest timer finishes
   useEffect(() => {
@@ -182,7 +214,7 @@ export default function DayWorkoutView({
         const todayCount = getDayCompletedCount(currentDay);
         const totalSets = getDayTotalSets(currentDay);
         if (todayCount > 0) {
-          const todayStr = new Date().toISOString().split('T')[0];
+          const todayStr = formatLocalDateKey(new Date());
           const HISTORY_KEY = 'nexus_workout_history_v1';
           const raw = localStorage.getItem(HISTORY_KEY);
           const history = raw ? JSON.parse(raw) : {};
@@ -205,7 +237,7 @@ export default function DayWorkoutView({
 
     window.addEventListener('nexus_rest_completed', handleRestCompleted);
     return () => window.removeEventListener('nexus_rest_completed', handleRestCompleted);
-  }, [currentDay, completedSets]);
+  }, [currentDay, completedSets, getDayCompletedCount, getDayTotalSets]);
 
   const toggleExpand = React.useCallback((exNum: number) => {
     setExpandedExerciseNum((prev) => (prev === exNum ? null : exNum));
@@ -233,37 +265,6 @@ export default function DayWorkoutView({
       onOpenTimer(restSec, exName, true, true);
     }
   }, [completedSets, onOpenTimer]);
-
-  const getDayCompletedCount = React.useCallback((day: WorkoutDay) => {
-    if (day.isRest || !day.exercises) return 0;
-    let count = 0;
-    day.exercises.forEach((ex) => {
-      for (let i = 0; i < ex.sets; i++) {
-        if (completedSets[`${day.id}-${ex.num}-${i}`]) {
-          count++;
-        }
-      }
-    });
-    return count;
-  }, [completedSets]);
-
-  const getDayTotalSets = React.useCallback((day: WorkoutDay) => {
-    if (day.isRest || !day.exercises) return 0;
-    return day.exercises.reduce((acc, ex) => acc + ex.sets, 0);
-  }, []);
-
-  const completedSetsCount = React.useMemo(
-    () => getDayCompletedCount(currentDay),
-    [getDayCompletedCount, currentDay]
-  );
-  const totalSetsCount = React.useMemo(
-    () => getDayTotalSets(currentDay),
-    [getDayTotalSets, currentDay]
-  );
-  const progressPercent = React.useMemo(
-    () => (totalSetsCount > 0 ? (completedSetsCount / totalSetsCount) * 100 : 0),
-    [completedSetsCount, totalSetsCount]
-  );
 
   return (
     <div className="space-y-5 sm:space-y-6">

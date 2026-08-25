@@ -17,6 +17,7 @@ import {
   CheckCheck,
 } from "lucide-react";
 import { WORKOUT_DAYS } from "@/data/workoutData";
+import { formatLocalDateKey } from "@/components/WorkoutCalendarView";
 
 interface SettingsViewProps {
   currentDayId: string;
@@ -113,7 +114,7 @@ export default function SettingsView({
     } catch {}
   };
 
-  const handleCompleteToday = () => {
+  const handleMarkTodayDone = () => {
     try {
       const targetDay =
         WORKOUT_DAYS.find((d) => d.id === currentDayId) || WORKOUT_DAYS[0];
@@ -123,25 +124,23 @@ export default function SettingsView({
       const currentSets = parsed.sets || {};
 
       let totalSets = 0;
+      let actualCompleted = 0;
       if (targetDay.exercises) {
         targetDay.exercises.forEach((ex) => {
           for (let i = 0; i < ex.sets; i++) {
-            currentSets[`${targetDay.id}-${ex.num}-${i}`] = true;
             totalSets++;
+            if (currentSets[`${targetDay.id}-${ex.num}-${i}`]) {
+              actualCompleted++;
+            }
           }
         });
       }
 
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          timestamp: Date.now(),
-          sets: currentSets,
-        }),
-      );
+      // If sets were checked, record actual count; if 0 were checked, log full routine session
+      const finalCount = actualCompleted > 0 ? actualCompleted : totalSets;
 
-      // Record 100% completion in Workout Calendar History
-      const todayStr = new Date().toISOString().split("T")[0];
+      // Record in Workout Calendar History
+      const todayStr = formatLocalDateKey(new Date());
       const HISTORY_KEY = "nexus_workout_history_v1";
       const rawHistory = localStorage.getItem(HISTORY_KEY);
       const history = rawHistory ? JSON.parse(rawHistory) : {};
@@ -151,24 +150,26 @@ export default function SettingsView({
         dayId: targetDay.id,
         dayNumber: targetDay.dayNumber,
         dayTitle: targetDay.title,
-        completedSetsCount: totalSets,
+        completedSetsCount: finalCount,
         totalSetsCount: totalSets,
         timestamp: Date.now(),
-        notes: "Marked 100% complete via Settings",
+        notes:
+          actualCompleted > 0
+            ? `Logged ${actualCompleted}/${totalSets} sets`
+            : "Logged full session",
       };
       localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 
-      // Update count state
-      setStoredSetsCount(Object.values(currentSets).filter(Boolean).length);
-
-      // Dispatch event to update active views
+      // Dispatch event to update views
       window.dispatchEvent(
         new CustomEvent("nexus_reset_progress", {
-          detail: { dayId: currentDayId, action: "complete" },
+          detail: { dayId: currentDayId, action: "log_done" },
         }),
       );
 
-      setResetFeedback(`All ${totalSets} sets for ${targetDay.title} marked complete! 🎉`);
+      setResetFeedback(
+        `Today's workout recorded in calendar (${finalCount}/${totalSets} sets)! Streak updated! 🔥`,
+      );
       setTimeout(() => setResetFeedback(null), 3500);
     } catch {}
   };
@@ -285,21 +286,21 @@ export default function SettingsView({
         </div>
 
         <div className="space-y-3">
-          {/* Complete Today */}
+          {/* Mark Today as Done */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-700/60 transition">
             <div>
               <p className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Complete Today&apos;s Routine</span>
+                <span>Mark Today as Done</span>
               </p>
-              <p className="text-xs text-slate-400">{currentDayTitle} &bull; Marks all sets 100% done</p>
+              <p className="text-xs text-slate-400">{currentDayTitle} &bull; Logs session to calendar with your actual completed sets</p>
             </div>
             <button
-              onClick={handleCompleteToday}
+              onClick={handleMarkTodayDone}
               className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 text-xs font-bold transition active:scale-95 self-start sm:self-auto"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Complete Today</span>
+              <span>Mark Done</span>
             </button>
           </div>
 
