@@ -13,7 +13,7 @@ import WorkoutTimerModal from '@/components/WorkoutTimerModal';
 import SettingsView from '@/components/SettingsView';
 import AuthLock from '@/components/AuthLock';
 import Footer from '@/components/Footer';
-import { ExerciseDetail, WORKOUT_DAYS } from '@/data/workoutData';
+import { ExerciseDetail, WORKOUT_DAYS, EXERCISE_DATABASE } from '@/data/workoutData';
 
 export default function HomePage() {
   const [authState, setAuthState] = useState<'checking' | 'unlocked' | 'locked'>('checking');
@@ -36,7 +36,7 @@ export default function HomePage() {
 
   const currentDay = WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
 
-  // Check saved session on mount
+  // 1. Check saved auth session, active tab, selected day & exercise on mount
   useEffect(() => {
     try {
       const isRemembered = localStorage.getItem('nexus_auth_session') === 'active';
@@ -46,15 +46,102 @@ export default function HomePage() {
       } else {
         setAuthState('locked');
       }
+
+      // Restore active tab
+      const savedTab = sessionStorage.getItem('nexus_active_tab');
+      if (savedTab) {
+        setActiveTab(savedTab);
+      }
+
+      // Restore selected workout day
+      const savedDayId = sessionStorage.getItem('nexus_selected_day_id');
+      if (savedDayId) {
+        setSelectedDayId(savedDayId);
+      }
+
+      // Restore selected exercise detail if opened in library
+      const savedExNum = sessionStorage.getItem('nexus_selected_exercise_num');
+      if (savedExNum) {
+        const num = parseInt(savedExNum, 10);
+        const found = EXERCISE_DATABASE.find((e) => e.num === num);
+        if (found) {
+          setSelectedExerciseDetail(found);
+        }
+      }
     } catch {
       setAuthState('locked');
     }
   }, []);
 
+  // 2. Persist & Restore Scroll Position on reload
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem('nexus_scroll_y');
+    if (savedScroll) {
+      const scrollY = parseInt(savedScroll, 10);
+      if (!isNaN(scrollY) && scrollY > 0) {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            window.scrollTo({ top: scrollY, behavior: 'instant' as ScrollBehavior });
+          }, 80);
+        });
+      }
+    }
+
+    const handleScroll = () => {
+      sessionStorage.setItem('nexus_scroll_y', String(window.scrollY));
+    };
+
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('nexus_scroll_y', String(window.scrollY));
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [activeTab]);
+
   const handleLockApp = () => {
     localStorage.removeItem('nexus_auth_session');
     sessionStorage.removeItem('nexus_auth_session');
     setAuthState('locked');
+  };
+
+  const handleTabChange = (tab: string, shouldScrollToTop: boolean = false) => {
+    setActiveTab(tab);
+    try {
+      sessionStorage.setItem('nexus_active_tab', tab);
+    } catch {}
+    if (tab !== 'library') {
+      setSelectedExerciseDetail(null);
+      try {
+        sessionStorage.removeItem('nexus_selected_exercise_num');
+      } catch {}
+    }
+    if (shouldScrollToTop) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleDaySelect = (dayId: string) => {
+    setSelectedDayId(dayId);
+    try {
+      sessionStorage.setItem('nexus_selected_day_id', dayId);
+    } catch {}
+  };
+
+  const handleExerciseSelect = (ex: ExerciseDetail | null) => {
+    setSelectedExerciseDetail(ex);
+    try {
+      if (ex) {
+        sessionStorage.setItem('nexus_selected_exercise_num', String(ex.num));
+      } else {
+        sessionStorage.removeItem('nexus_selected_exercise_num');
+      }
+    } catch {}
   };
 
   const handleOpenTimer = (
@@ -83,16 +170,9 @@ export default function HomePage() {
     }
   };
 
-  const handleSelectDayFromSchedule = (dayId: string) => {
-    setSelectedDayId(dayId);
-    setActiveTab('today');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleBackToWorkout = () => {
-    setActiveTab('today');
-    setSelectedExerciseDetail(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    handleTabChange('today', true);
+    handleExerciseSelect(null);
   };
 
   // 1. Initial seamless loading state (prevents lock screen flash)
@@ -111,12 +191,7 @@ export default function HomePage() {
       {/* Sticky Navigation Header */}
       <Header
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          if (tab !== 'library') {
-            setSelectedExerciseDetail(null);
-          }
-        }}
+        setActiveTab={(tab) => handleTabChange(tab, false)}
         onOpenTimer={handleHeaderTimerClick}
         timerRunning={isTimerRunning}
         onLock={handleLockApp}
@@ -127,7 +202,7 @@ export default function HomePage() {
         {activeTab === 'today' && (
           <DayWorkoutView
             selectedDayId={selectedDayId}
-            setSelectedDayId={setSelectedDayId}
+            setSelectedDayId={handleDaySelect}
             onOpenTimer={handleOpenTimer}
           />
         )}
@@ -142,8 +217,8 @@ export default function HomePage() {
           <ExerciseLibraryView
             onOpenTimer={handleOpenTimer}
             selectedExercise={selectedExerciseDetail}
-            onClearSelectedExercise={() => setSelectedExerciseDetail(null)}
-            onSelectExercise={(ex) => setSelectedExerciseDetail(ex)}
+            onClearSelectedExercise={() => handleExerciseSelect(null)}
+            onSelectExercise={(ex) => handleExerciseSelect(ex)}
             onBackToWorkout={handleBackToWorkout}
             currentWorkoutDayName={`Day ${currentDay.dayNumber} (${currentDay.title})`}
           />
@@ -180,12 +255,7 @@ export default function HomePage() {
       {/* Mobile Bottom Navigation Bar */}
       <BottomNav
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          if (tab !== 'library') {
-            setSelectedExerciseDetail(null);
-          }
-        }}
+        setActiveTab={(tab) => handleTabChange(tab, true)}
       />
 
       {/* Footer */}
