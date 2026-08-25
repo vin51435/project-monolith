@@ -234,6 +234,21 @@ export default function WorkoutTimerModal({
             clearInterval(timerIntervalRef.current as NodeJS.Timeout);
             setTimerIsRunning(false);
             playChime();
+
+            // When rest timer completes, dispatch event to log and finalize calendar session
+            try {
+              window.dispatchEvent(
+                new CustomEvent('nexus_rest_completed', {
+                  detail: {
+                    exerciseName,
+                    completedAt: Date.now(),
+                  },
+                })
+              );
+            } catch {
+              // Ignore event dispatch errors
+            }
+
             return 0;
           }
           return prev - 1;
@@ -245,7 +260,7 @@ export default function WorkoutTimerModal({
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
-  }, [timerIsRunning, playChime]);
+  }, [timerIsRunning, playChime, exerciseName]);
 
   // --------------------------------------------------------------------------
   // STOPWATCH TICKER EFFECT (High precision)

@@ -108,6 +108,67 @@ export default function DayWorkoutView({
     }
   }, [completedSets, isStorageLoaded]);
 
+  // 4. Automatically record workout session to device calendar history
+  useEffect(() => {
+    if (!isStorageLoaded) return;
+    try {
+      const todayCount = getDayCompletedCount(currentDay);
+      const totalSets = getDayTotalSets(currentDay);
+      if (todayCount > 0) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const HISTORY_KEY = 'nexus_workout_history_v1';
+        const raw = localStorage.getItem(HISTORY_KEY);
+        const history = raw ? JSON.parse(raw) : {};
+
+        history[todayStr] = {
+          date: todayStr,
+          dayId: currentDay.id,
+          dayNumber: currentDay.dayNumber,
+          dayTitle: currentDay.title,
+          completedSetsCount: todayCount,
+          totalSetsCount: totalSets,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      }
+    } catch {
+      // Ignore storage write errors
+    }
+  }, [completedSets, isStorageLoaded, currentDay]);
+
+  // 5. Log & finalize calendar session when rest timer finishes
+  useEffect(() => {
+    const handleRestCompleted = (e: Event) => {
+      const customEvent = e as CustomEvent<{ exerciseName?: string; completedAt?: number }>;
+      try {
+        const todayCount = getDayCompletedCount(currentDay);
+        const totalSets = getDayTotalSets(currentDay);
+        if (todayCount > 0) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const HISTORY_KEY = 'nexus_workout_history_v1';
+          const raw = localStorage.getItem(HISTORY_KEY);
+          const history = raw ? JSON.parse(raw) : {};
+
+          history[todayStr] = {
+            date: todayStr,
+            dayId: currentDay.id,
+            dayNumber: currentDay.dayNumber,
+            dayTitle: currentDay.title,
+            completedSetsCount: todayCount,
+            totalSetsCount: totalSets,
+            timestamp: customEvent.detail?.completedAt || Date.now(),
+          };
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        }
+      } catch {
+        // Ignore storage errors
+      }
+    };
+
+    window.addEventListener('nexus_rest_completed', handleRestCompleted);
+    return () => window.removeEventListener('nexus_rest_completed', handleRestCompleted);
+  }, [currentDay, completedSets]);
+
   const toggleExpand = (exNum: number) => {
     setExpandedExerciseNum((prev) => (prev === exNum ? null : exNum));
   };
@@ -137,6 +198,21 @@ export default function DayWorkoutView({
           delete next[k];
         }
       });
+      try {
+        if (Object.keys(next).length === 0) {
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              timestamp: Date.now(),
+              sets: next,
+            })
+          );
+        }
+      } catch {
+        // Ignore storage errors
+      }
       return next;
     });
   };

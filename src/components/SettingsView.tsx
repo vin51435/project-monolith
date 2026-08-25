@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Settings,
   RotateCcw,
@@ -13,8 +13,8 @@ import {
   CheckCircle2,
   Play,
   Database,
-  Info
-} from 'lucide-react';
+  Info,
+} from "lucide-react";
 
 interface SettingsViewProps {
   currentDayId: string;
@@ -34,12 +34,12 @@ export default function SettingsView({
   // Load sound preference and count stored sets on mount
   useEffect(() => {
     try {
-      const savedSound = localStorage.getItem('nexus_timer_sound_enabled');
+      const savedSound = localStorage.getItem("nexus_timer_sound_enabled");
       if (savedSound !== null) {
-        setSoundEnabled(savedSound === 'true');
+        setSoundEnabled(savedSound === "true");
       }
 
-      const rawSets = localStorage.getItem('nexus_completed_sets_v1');
+      const rawSets = localStorage.getItem("nexus_completed_sets_v1");
       if (rawSets) {
         const parsed = JSON.parse(rawSets);
         if (parsed.sets) {
@@ -58,31 +58,37 @@ export default function SettingsView({
     const next = !soundEnabled;
     setSoundEnabled(next);
     try {
-      localStorage.setItem('nexus_timer_sound_enabled', String(next));
+      localStorage.setItem("nexus_timer_sound_enabled", String(next));
     } catch {}
   };
 
   // Test sound buzzer
   const handleTestChime = () => {
     try {
-      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      if (typeof window !== "undefined" && "vibrate" in navigator) {
         navigator.vibrate([150, 80, 200]);
       }
       const AudioContextClass =
         window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
       const now = ctx.currentTime;
 
-      const playBeep = (freq: number, start: number, dur: number, isFinal: boolean = false) => {
+      const playBeep = (
+        freq: number,
+        start: number,
+        dur: number,
+        isFinal: boolean = false,
+      ) => {
         const osc = ctx.createOscillator();
         const subOsc = ctx.createOscillator();
         const gain = ctx.createGain();
 
-        osc.type = 'triangle';
+        osc.type = "triangle";
         osc.frequency.setValueAtTime(freq, start);
-        subOsc.type = 'sine';
+        subOsc.type = "sine";
         subOsc.frequency.setValueAtTime(freq * 1.5, start);
 
         gain.gain.setValueAtTime(0.01, start);
@@ -106,26 +112,75 @@ export default function SettingsView({
   };
 
   const handleResetToday = () => {
+    try {
+      const STORAGE_KEY = "nexus_completed_sets_v1";
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.sets) {
+          const nextSets: Record<string, boolean> = {};
+          Object.keys(parsed.sets).forEach((k) => {
+            if (!k.startsWith(`${currentDayId}-`)) {
+              nextSets[k] = parsed.sets[k];
+            }
+          });
+          if (Object.keys(nextSets).length === 0) {
+            localStorage.removeItem(STORAGE_KEY);
+          } else {
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify({
+                timestamp: Date.now(),
+                sets: nextSets,
+              }),
+            );
+          }
+        }
+      }
+
+      // Also update storedSetsCount state
+      const updatedRaw = localStorage.getItem("nexus_completed_sets_v1");
+      if (updatedRaw) {
+        const parsed = JSON.parse(updatedRaw);
+        setStoredSetsCount(
+          parsed.sets ? Object.values(parsed.sets).filter(Boolean).length : 0,
+        );
+      } else {
+        setStoredSetsCount(0);
+      }
+    } catch {}
+
     window.dispatchEvent(
-      new CustomEvent('nexus_reset_progress', { detail: { dayId: currentDayId } })
+      new CustomEvent("nexus_reset_progress", {
+        detail: { dayId: currentDayId },
+      }),
     );
     setResetFeedback(`Today's sets cleared!`);
     setTimeout(() => setResetFeedback(null), 3000);
   };
 
   const handleResetAll = () => {
-    if (window.confirm('Are you sure you want to reset all completed sets across all 7 days?')) {
-      window.dispatchEvent(new CustomEvent('nexus_reset_progress', { detail: {} }));
+    if (
+      window.confirm(
+        "Are you sure you want to reset all completed sets across all 7 days?",
+      )
+    ) {
+      try {
+        localStorage.removeItem("nexus_completed_sets_v1");
+      } catch {}
+      window.dispatchEvent(
+        new CustomEvent("nexus_reset_progress", { detail: {} }),
+      );
       setStoredSetsCount(0);
-      setResetFeedback('All 7-day progress reset!');
+      setResetFeedback("All 7-day progress reset!");
       setTimeout(() => setResetFeedback(null), 3000);
     }
   };
 
   const handleClearSession = () => {
     try {
-      localStorage.removeItem('nexus_auth_session');
-      sessionStorage.removeItem('nexus_auth_session');
+      localStorage.removeItem("nexus_auth_session");
+      sessionStorage.removeItem("nexus_auth_session");
       onLockApp();
     } catch {}
   };
@@ -138,8 +193,12 @@ export default function SettingsView({
           <Settings className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">App Settings &amp; Preferences</h2>
-          <p className="text-xs sm:text-sm text-slate-400">Workout reset options, audio timer alerts &amp; local storage</p>
+          <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+            App Settings &amp; Preferences
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Workout reset options, audio timer alerts &amp; local storage
+          </p>
         </div>
       </div>
 
@@ -156,7 +215,9 @@ export default function SettingsView({
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <RotateCcw className="w-4 h-4 text-indigo-400" />
-            <h3 className="text-sm sm:text-base font-bold text-white">Workout Reset Options</h3>
+            <h3 className="text-sm sm:text-base font-bold text-white">
+              Workout Reset Options
+            </h3>
           </div>
           <span className="text-xs text-slate-400">Progress Management</span>
         </div>
@@ -165,7 +226,9 @@ export default function SettingsView({
           {/* Reset Today */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition">
             <div>
-              <p className="text-sm font-bold text-white">Reset Today&apos;s Routine</p>
+              <p className="text-sm font-bold text-white">
+                Reset Today&apos;s Routine
+              </p>
               <p className="text-xs text-slate-400">{currentDayTitle}</p>
             </div>
             <button
@@ -180,8 +243,12 @@ export default function SettingsView({
           {/* Reset All 7 Days */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition">
             <div>
-              <p className="text-sm font-bold text-rose-300">Reset All 7-Day Splits</p>
-              <p className="text-xs text-slate-400">Clears all checked sets across the entire program</p>
+              <p className="text-sm font-bold text-rose-300">
+                Reset All 7-Day Splits
+              </p>
+              <p className="text-xs text-slate-400">
+                Clears all checked sets across the entire program
+              </p>
             </div>
             <button
               onClick={handleResetAll}
@@ -199,9 +266,11 @@ export default function SettingsView({
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-400" />
-            <h3 className="text-sm sm:text-base font-bold text-white">Local Persistence &amp; Auto-Reset</h3>
+            <h3 className="text-sm sm:text-base font-bold text-white">
+              Local Persistence &amp; Auto-Reset
+            </h3>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-bold">
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-bold text-center">
             16h Inactivity Window
           </span>
         </div>
@@ -212,7 +281,8 @@ export default function SettingsView({
             <span>Completed sets are saved directly on this browser.</span>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed pl-6">
-            If there is no workout activity for 16 consecutive hours, the routine automatically clears so your next session starts fresh.
+            If there is no workout activity for 16 consecutive hours, the
+            routine automatically clears so your next session starts fresh.
           </p>
         </div>
       </div>
@@ -222,7 +292,9 @@ export default function SettingsView({
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <Volume2 className="w-4 h-4 text-indigo-400" />
-            <h3 className="text-sm sm:text-base font-bold text-white">Rest Timer Audio Alerts</h3>
+            <h3 className="text-sm sm:text-base font-bold text-white">
+              Rest Timer Audio Alerts
+            </h3>
           </div>
           <span className="text-xs text-slate-400">Gym Buzzer Sound</span>
         </div>
@@ -231,18 +303,24 @@ export default function SettingsView({
           <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80">
             <div>
               <p className="text-sm font-bold text-white">Alarm Buzzer Chime</p>
-              <p className="text-xs text-slate-400">High-volume triple chime + vibration at 0s</p>
+              <p className="text-xs text-slate-400">
+                High-volume triple chime + vibration at 0s
+              </p>
             </div>
             <button
               onClick={handleToggleSound}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition active:scale-95 ${
                 soundEnabled
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
+                  ? "bg-indigo-600 text-white border-indigo-500 shadow-sm"
+                  : "bg-slate-800 text-slate-400 border-slate-700"
               }`}
             >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              <span>{soundEnabled ? 'Sound On' : 'Muted'}</span>
+              {soundEnabled ? (
+                <Volume2 className="w-4 h-4" />
+              ) : (
+                <VolumeX className="w-4 h-4" />
+              )}
+              <span>{soundEnabled ? "Sound On" : "Muted"}</span>
             </button>
           </div>
 
@@ -261,7 +339,9 @@ export default function SettingsView({
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-indigo-400" />
-            <h3 className="text-sm sm:text-base font-bold text-white">Security &amp; Device Storage</h3>
+            <h3 className="text-sm sm:text-base font-bold text-white">
+              Security &amp; Device Storage
+            </h3>
           </div>
           <span className="text-xs text-slate-400">Local Only</span>
         </div>
@@ -272,7 +352,9 @@ export default function SettingsView({
               <Database className="w-4 h-4 text-indigo-400" />
               <span>Cached Completed Sets:</span>
             </span>
-            <span className="font-bold text-white">{storedSetsCount} sets recorded</span>
+            <span className="font-bold text-white">
+              {storedSetsCount} sets recorded
+            </span>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-2 pt-2 border-t border-slate-800">

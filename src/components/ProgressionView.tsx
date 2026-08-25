@@ -1,16 +1,52 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   PROGRESSION_METHODS,
   GOBLET_SQUAT_PROGRESSION,
   EFFORT_GUIDELINES
 } from '@/data/workoutData';
-import { TrendingUp, Target, AlertTriangle, ArrowRight, Check, Zap } from 'lucide-react';
+import { TrendingUp, Target, AlertTriangle, ArrowRight, Check, Zap, Calendar as CalendarIcon, Flame } from 'lucide-react';
+import WorkoutCalendarView from '@/components/WorkoutCalendarView';
 
 export default function ProgressionView() {
+  const [subTab, setSubTab] = useState<'calendar' | 'overload'>('calendar');
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
+      {/* Sub-Tab Switcher Pill */}
+      <div className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md max-w-md mx-auto">
+        <button
+          onClick={() => setSubTab('calendar')}
+          className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 ${
+            subTab === 'calendar'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <CalendarIcon className="w-4 h-4" />
+          <span>Calendar &amp; Streaks</span>
+        </button>
+
+        <button
+          onClick={() => setSubTab('overload')}
+          className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 ${
+            subTab === 'overload'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          <span>6 kg Overload Rules</span>
+        </button>
+      </div>
+
+      {/* 1. Workout Calendar Tab */}
+      {subTab === 'calendar' && <WorkoutCalendarView />}
+
+      {/* 2. Overload Science Tab */}
+      {subTab === 'overload' && (
+        <div className="space-y-6 animate-fadeIn">
       {/* 1. Progression Principles Hero */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl">
         <div className="flex items-center gap-3 mb-3">
@@ -142,5 +178,7 @@ export default function ProgressionView() {
         </div>
       </div>
     </div>
-  );
+  )}
+</div>
+);
 }
