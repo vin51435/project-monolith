@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dumbbell, Globe, ShieldCheck, Heart, Sparkles } from 'lucide-react';
+import { Dumbbell, ShieldCheck } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -24,17 +24,13 @@ export default function Footer() {
 
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1 text-slate-400">
-              <Globe className="w-3.5 h-3.5 text-indigo-400" /> Hostinger Ready
-            </span>
-            <span className="text-slate-700">&bull;</span>
-            <span className="flex items-center gap-1 text-slate-400">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 100% Client-Side Static Export
             </span>
           </div>
         </div>
 
         <div className="mt-6 pt-6 border-t border-slate-900 text-center text-[11px] text-slate-600">
-          Built with Next.js, Tailwind CSS &amp; TypeScript &bull; Ready for deployment to Hostinger web hosting
+          Built with Next.js, Tailwind CSS &amp; TypeScript
         </div>
       </div>
     </footer>

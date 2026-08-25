@@ -81,6 +81,7 @@ export default function WorkoutTimerModal({
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [sessionSec, setSessionSec] = useState<number>(0);
   const [sessionRunning, setSessionRunning] = useState<boolean>(true);
+  const sessionStartTimeRef = useRef<number>(Date.now());
 
   // Prevent auto-start on first load
   const isFirstMount = useRef(true);
@@ -94,15 +95,28 @@ export default function WorkoutTimerModal({
         setSoundEnabled(savedSound === 'true');
       }
 
-      // Restore Continuous Session Duration
+      // Restore Continuous Session Duration (Synchronized with sessionStorage)
+      const isRunning = sessionStorage.getItem('nexus_workout_session_running') !== 'false';
+      const pausedElapsed = sessionStorage.getItem('nexus_workout_session_paused_elapsed');
       const sessionStart = sessionStorage.getItem('nexus_workout_session_start');
-      if (!sessionStart) {
-        sessionStorage.setItem('nexus_workout_session_start', String(Date.now()));
+
+      if (!isRunning && pausedElapsed !== null) {
+        const pSec = parseInt(pausedElapsed, 10) || 0;
+        setSessionSec(pSec);
+        setSessionRunning(false);
+      } else if (sessionStart) {
+        const startTs = parseInt(sessionStart, 10);
+        sessionStartTimeRef.current = startTs;
+        const elapsedSec = Math.max(0, Math.floor((Date.now() - startTs) / 1000));
+        setSessionSec(elapsedSec);
+        setSessionRunning(true);
       } else {
-        const elapsedSec = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
-        if (elapsedSec > 0) {
-          setSessionSec(elapsedSec);
-        }
+        const now = Date.now();
+        sessionStartTimeRef.current = now;
+        sessionStorage.setItem('nexus_workout_session_start', String(now));
+        sessionStorage.setItem('nexus_workout_session_running', 'true');
+        setSessionSec(0);
+        setSessionRunning(true);
       }
 
       // Restore Active Rest Countdown if page was reloaded during countdown
@@ -288,12 +302,48 @@ export default function WorkoutTimerModal({
     setCurrentTime(new Date());
     const clockInterval = setInterval(() => {
       setCurrentTime(new Date());
-      if (sessionRunning) {
-        setSessionSec((prev) => prev + 1);
+      if (sessionRunning && sessionStartTimeRef.current) {
+        const elapsed = Math.max(
+          0,
+          Math.floor((Date.now() - sessionStartTimeRef.current) / 1000),
+        );
+        setSessionSec(elapsed);
       }
     }, 1000);
     return () => clearInterval(clockInterval);
   }, [sessionRunning]);
+
+  const handleResetSession = () => {
+    const now = Date.now();
+    sessionStartTimeRef.current = now;
+    setSessionSec(0);
+    try {
+      sessionStorage.setItem('nexus_workout_session_start', String(now));
+      sessionStorage.removeItem('nexus_workout_session_paused_elapsed');
+    } catch {}
+  };
+
+  const handleToggleSession = () => {
+    const nextRunning = !sessionRunning;
+    setSessionRunning(nextRunning);
+    try {
+      if (!nextRunning) {
+        // Pausing
+        sessionStorage.setItem('nexus_workout_session_running', 'false');
+        sessionStorage.setItem(
+          'nexus_workout_session_paused_elapsed',
+          String(sessionSec),
+        );
+      } else {
+        // Resuming
+        const newStart = Date.now() - sessionSec * 1000;
+        sessionStartTimeRef.current = newStart;
+        sessionStorage.setItem('nexus_workout_session_start', String(newStart));
+        sessionStorage.setItem('nexus_workout_session_running', 'true');
+        sessionStorage.removeItem('nexus_workout_session_paused_elapsed');
+      }
+    } catch {}
+  };
 
   // Timer Actions
   const setTimerPreset = (secs: number) => {
@@ -886,7 +936,7 @@ export default function WorkoutTimerModal({
 
               <div className="flex items-center justify-center gap-2 pt-1">
                 <button
-                  onClick={() => setSessionRunning(!sessionRunning)}
+                  onClick={handleToggleSession}
                   className={`px-3 py-1 rounded-xl text-xs font-bold border transition ${
                     sessionRunning
                       ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
@@ -896,8 +946,8 @@ export default function WorkoutTimerModal({
                   {sessionRunning ? 'Pause Session' : 'Resume Session'}
                 </button>
                 <button
-                  onClick={() => setSessionSec(0)}
-                  className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition"
+                  onClick={handleResetSession}
+                  className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition active:scale-95"
                 >
                   Reset Session
                 </button>

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { EXERCISE_DATABASE, ExerciseDetail } from '@/data/workoutData';
+import ExerciseImage from '@/components/ExerciseImage';
 import {
   Search,
   Dumbbell,
@@ -186,22 +187,12 @@ export default function ExerciseLibraryView({
 
             {/* Body */}
             <div className="p-4 sm:p-6 space-y-4 bg-slate-950/60">
-              {/* Demonstration Visual */}
-              <div
-                onClick={() => setEnlargedImage(ex.image)}
-                className="relative cursor-pointer group rounded-2xl overflow-hidden bg-white border border-slate-700/80 flex items-center justify-center p-2.5 hover:border-indigo-500/80 transition shadow-inner"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={ex.image}
-                  alt={ex.name}
-                  className="max-h-60 sm:max-h-72 w-auto max-w-full object-contain rounded-xl"
-                  loading="lazy"
-                />
-                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-900/90 text-[10px] text-slate-200 font-semibold border border-slate-700 shadow-sm">
-                  Tap to Enlarge
-                </span>
-              </div>
+              {/* Demonstration Visual (Zero-CLS Lazy Loaded) */}
+              <ExerciseImage
+                src={ex.image}
+                alt={ex.name}
+                onEnlarge={() => setEnlargedImage(ex.image)}
+              />
 
               {/* Targeted Muscles */}
               <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs">

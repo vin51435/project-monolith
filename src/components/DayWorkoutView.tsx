@@ -9,6 +9,7 @@ import {
   ExerciseDetail
 } from '@/data/workoutData';
 import { formatLocalDateKey } from '@/components/WorkoutCalendarView';
+import ExerciseImage from '@/components/ExerciseImage';
 import {
   CheckCircle2,
   Circle,
@@ -505,22 +506,12 @@ export default function DayWorkoutView({
                 {/* INLINE EXPANDED FORM GUIDE DROPDOWN */}
                 {isExpanded && exDetail && (
                   <div className="pt-3 pb-1 border-t border-slate-800/80 space-y-4 animate-fadeIn">
-                    {/* Demonstration Visual */}
-                    <div
-                      onClick={() => setEnlargedImage(exDetail.image)}
-                      className="relative cursor-pointer group rounded-2xl overflow-hidden bg-white border border-slate-700/80 flex items-center justify-center p-2.5 hover:border-indigo-500/80 transition shadow-inner"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={exDetail.image}
-                        alt={exDetail.name}
-                        className="max-h-56 sm:max-h-64 w-auto max-w-full object-contain rounded-xl"
-                        loading="lazy"
-                      />
-                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-900/90 text-[10px] text-slate-200 font-semibold border border-slate-700 shadow-sm">
-                        Tap to Enlarge
-                      </span>
-                    </div>
+                    {/* Demonstration Visual (Zero-CLS Lazy Loaded) */}
+                    <ExerciseImage
+                      src={exDetail.image}
+                      alt={exDetail.name}
+                      onEnlarge={() => setEnlargedImage(exDetail.image)}
+                    />
 
                     {/* Targeted Muscles Breakdown */}
                     <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 text-xs">
