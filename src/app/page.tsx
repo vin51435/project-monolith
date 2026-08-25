@@ -25,6 +25,10 @@ export default function HomePage() {
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [timerSeconds, setTimerSeconds] = useState<number>(60);
   const [timerExerciseName, setTimerExerciseName] = useState<string>('');
+  const [timerTrigger, setTimerTrigger] = useState<{ id: number; autoStart: boolean }>({
+    id: 0,
+    autoStart: false,
+  });
 
   // Exercise Library Selection State
   const [selectedExerciseDetail, setSelectedExerciseDetail] = useState<ExerciseDetail | null>(null);
@@ -52,11 +56,17 @@ export default function HomePage() {
     setAuthState('locked');
   };
 
-  const handleOpenTimer = (seconds: number = 60, name: string = '') => {
+  const handleOpenTimer = (
+    seconds: number = 60,
+    name: string = '',
+    autoStart: boolean = false,
+    keepMinimized: boolean = false
+  ) => {
     setTimerSeconds(seconds);
     setTimerExerciseName(name);
     setIsTimerOpen(true);
-    setIsTimerMinimized(false);
+    setIsTimerMinimized(keepMinimized);
+    setTimerTrigger({ id: Date.now(), autoStart });
   };
 
   const handleHeaderTimerClick = () => {
@@ -159,6 +169,7 @@ export default function HomePage() {
         initialSeconds={timerSeconds}
         exerciseName={timerExerciseName}
         onTimerStateChange={setIsTimerRunning}
+        trigger={timerTrigger}
       />
 
       {/* Mobile Bottom Navigation Bar */}

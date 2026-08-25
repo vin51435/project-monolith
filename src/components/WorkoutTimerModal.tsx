@@ -35,6 +35,7 @@ interface WorkoutTimerModalProps {
   onTimerStateChange?: (isActive: boolean) => void;
   isMinimized?: boolean;
   setIsMinimized?: (minimized: boolean) => void;
+  trigger?: { id: number; autoStart: boolean };
 }
 
 export default function WorkoutTimerModal({
@@ -46,6 +47,7 @@ export default function WorkoutTimerModal({
   onTimerStateChange,
   isMinimized: controlledMinimized,
   setIsMinimized: setControlledMinimized,
+  trigger,
 }: WorkoutTimerModalProps) {
   // Mode selection: 'timer' | 'stopwatch' | 'clock'
   const [activeMode, setActiveMode] = useState<'timer' | 'stopwatch' | 'clock'>('timer');
@@ -83,20 +85,78 @@ export default function WorkoutTimerModal({
   // Prevent auto-start on first load
   const isFirstMount = useRef(true);
 
-  // Sync external initialSeconds trigger when modal opens (ready in paused state)
+  // Restore saved sound, session start time, and active countdown on mount
+  useEffect(() => {
+    try {
+      // Restore Sound Preference
+      const savedSound = localStorage.getItem('nexus_timer_sound_enabled');
+      if (savedSound !== null) {
+        setSoundEnabled(savedSound === 'true');
+      }
+
+      // Restore Continuous Session Duration
+      const sessionStart = sessionStorage.getItem('nexus_workout_session_start');
+      if (!sessionStart) {
+        sessionStorage.setItem('nexus_workout_session_start', String(Date.now()));
+      } else {
+        const elapsedSec = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
+        if (elapsedSec > 0) {
+          setSessionSec(elapsedSec);
+        }
+      }
+
+      // Restore Active Rest Countdown if page was reloaded during countdown
+      const activeTimerRaw = localStorage.getItem('nexus_active_rest_timer');
+      if (activeTimerRaw) {
+        const parsed = JSON.parse(activeTimerRaw);
+        if (parsed.targetEnd) {
+          const remaining = Math.ceil((parsed.targetEnd - Date.now()) / 1000);
+          if (remaining > 0) {
+            setTimerTotalSec(parsed.totalSec || 60);
+            setTimerRemainingSec(remaining);
+            setTimerIsRunning(true);
+          } else {
+            localStorage.removeItem('nexus_active_rest_timer');
+          }
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  // Persist active countdown state
+  useEffect(() => {
+    try {
+      if (timerIsRunning && timerRemainingSec > 0) {
+        localStorage.setItem(
+          'nexus_active_rest_timer',
+          JSON.stringify({
+            targetEnd: Date.now() + timerRemainingSec * 1000,
+            totalSec: timerTotalSec,
+          })
+        );
+      } else if (!timerIsRunning || timerRemainingSec === 0) {
+        localStorage.removeItem('nexus_active_rest_timer');
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, [timerIsRunning, timerRemainingSec, timerTotalSec]);
+
+  // Sync external initialSeconds / trigger when fired
   useEffect(() => {
     if (isFirstMount.current) {
       isFirstMount.current = false;
       return;
     }
-    if (isOpen && initialSeconds > 0) {
+    if (trigger && trigger.id > 0 && initialSeconds > 0) {
       setTimerTotalSec(initialSeconds);
       setTimerRemainingSec(initialSeconds);
-      setTimerIsRunning(false);
+      setTimerIsRunning(trigger.autoStart);
       setActiveMode('timer');
-      setIsMinimized(false);
     }
-  }, [isOpen, initialSeconds, exerciseName]);
+  }, [trigger, initialSeconds, exerciseName]);
 
   // Notify parent of active running state
   useEffect(() => {
@@ -443,6 +503,18 @@ export default function WorkoutTimerModal({
   const strokeDashoffset = circumference - (timerProgress / 100) * circumference;
   const swTime = formatStopwatch(stopwatchMs);
 
+  const toggleSound = () => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('nexus_timer_sound_enabled', String(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-6 shadow-2xl text-white space-y-4">
@@ -537,7 +609,7 @@ export default function WorkoutTimerModal({
                 )}
               </div>
               <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
+                onClick={toggleSound}
                 className={`p-2 rounded-xl border transition ${
                   soundEnabled
                     ? 'bg-indigo-950/60 text-indigo-400 border-indigo-800/60'

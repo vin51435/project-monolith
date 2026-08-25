@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   WORKOUT_DAYS,
   WorkoutDay,
@@ -27,7 +27,7 @@ import {
 interface DayWorkoutViewProps {
   selectedDayId: string;
   setSelectedDayId: (id: string) => void;
-  onOpenTimer: (seconds: number, name: string) => void;
+  onOpenTimer: (seconds?: number, name?: string, autoStart?: boolean, keepMinimized?: boolean) => void;
 }
 
 export default function DayWorkoutView({
@@ -35,8 +35,12 @@ export default function DayWorkoutView({
   setSelectedDayId,
   onOpenTimer,
 }: DayWorkoutViewProps) {
+  const STORAGE_KEY = 'nexus_completed_sets_v1';
+  const EXPIRATION_MS = 18 * 60 * 60 * 1000; // 18-hour persistence window
+
   // Store completed sets: key format `dayId-exerciseNum-setIndex`
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
+  const [isStorageLoaded, setIsStorageLoaded] = useState<boolean>(false);
   
   // Track which exercise cards are expanded inline
   const [expandedExerciseNum, setExpandedExerciseNum] = useState<number | null>(null);
@@ -46,6 +50,46 @@ export default function DayWorkoutView({
 
   const currentDay: WorkoutDay =
     WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
+
+  // 1. Load saved sets on initial mount (persists up to 18 hours)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const isRecent = parsed.timestamp && Date.now() - parsed.timestamp < EXPIRATION_MS;
+        if (isRecent && parsed.sets && typeof parsed.sets === 'object') {
+          setCompletedSets(parsed.sets);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+    } catch {
+      // Ignore storage read errors
+    } finally {
+      setIsStorageLoaded(true);
+    }
+  }, []);
+
+  // 2. Persist completed sets whenever they are updated
+  useEffect(() => {
+    if (!isStorageLoaded) return;
+    try {
+      if (Object.keys(completedSets).length === 0) {
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            timestamp: Date.now(),
+            sets: completedSets,
+          })
+        );
+      }
+    } catch {
+      // Ignore storage write errors
+    }
+  }, [completedSets, isStorageLoaded]);
 
   const toggleExpand = (exNum: number) => {
     setExpandedExerciseNum((prev) => (prev === exNum ? null : exNum));
@@ -64,7 +108,7 @@ export default function DayWorkoutView({
     if (willBeChecked) {
       const match = restString.match(/(\d+)/);
       const restSec = match ? parseInt(match[1], 10) : 60;
-      onOpenTimer(restSec, exName);
+      onOpenTimer(restSec, exName, true, true);
     }
   };
 
@@ -413,7 +457,7 @@ export default function DayWorkoutView({
 
                     <button
                       type="button"
-                      onClick={() => onOpenTimer(restSec, ex.name)}
+                      onClick={() => onOpenTimer(restSec, ex.name, false, false)}
                       className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-800/60 text-indigo-300 text-xs font-bold active:scale-95 transition"
                       title="Click to start rest timer"
                     >
