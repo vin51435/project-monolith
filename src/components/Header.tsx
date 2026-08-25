@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dumbbell, Timer, Flame, Sparkles, BookOpen, Layers, Lock } from 'lucide-react';
+import { Dumbbell, Timer, Flame, Sparkles, BookOpen, Layers, Lock, Settings } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
@@ -20,10 +20,10 @@ export default function Header({
 }: HeaderProps) {
   const navTabs = [
     { id: 'today', label: 'Workout Plan', icon: Dumbbell },
-    { id: 'schedule', label: '7-Day Split', icon: Flame },
     { id: 'night', label: 'Night Routine', icon: Sparkles },
     { id: 'progression', label: 'Progression & Glossary', icon: BookOpen },
     { id: 'library', label: '40 Guides', icon: Layers },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -99,10 +99,10 @@ export default function Header({
             {onLock && (
               <button
                 onClick={onLock}
-                className="p-1.5 sm:p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition active:scale-95"
+                className="p-1.5 sm:p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white transition active:scale-95"
                 title="Lock app"
               >
-                <Lock className="w-3.5 h-3.5" />
+                <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
           </div>

@@ -10,6 +10,7 @@ import ProgressionView from '@/components/ProgressionView';
 import GlossaryView from '@/components/GlossaryView';
 import ExerciseLibraryView from '@/components/ExerciseLibraryView';
 import WorkoutTimerModal from '@/components/WorkoutTimerModal';
+import SettingsView from '@/components/SettingsView';
 import AuthLock from '@/components/AuthLock';
 import Footer from '@/components/Footer';
 import { ExerciseDetail, WORKOUT_DAYS } from '@/data/workoutData';
@@ -131,10 +132,6 @@ export default function HomePage() {
           />
         )}
 
-        {activeTab === 'schedule' && (
-          <WeeklyScheduleView onSelectDay={handleSelectDayFromSchedule} />
-        )}
-
         {activeTab === 'night' && <NightRoutineView />}
 
         {activeTab === 'progression' && <ProgressionView />}
@@ -149,6 +146,14 @@ export default function HomePage() {
             onSelectExercise={(ex) => setSelectedExerciseDetail(ex)}
             onBackToWorkout={handleBackToWorkout}
             currentWorkoutDayName={`Day ${currentDay.dayNumber} (${currentDay.title})`}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsView
+            currentDayId={currentDay.id}
+            currentDayTitle={`Day ${currentDay.dayNumber}: ${currentDay.title}`}
+            onLockApp={handleLockApp}
           />
         )}
       </main>

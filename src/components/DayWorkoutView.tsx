@@ -36,7 +36,7 @@ export default function DayWorkoutView({
   onOpenTimer,
 }: DayWorkoutViewProps) {
   const STORAGE_KEY = 'nexus_completed_sets_v1';
-  const EXPIRATION_MS = 18 * 60 * 60 * 1000; // 18-hour persistence window
+  const EXPIRATION_MS = 16 * 60 * 60 * 1000; // 16-hour inactivity auto-reset window
 
   // Store completed sets: key format `dayId-exerciseNum-setIndex`
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
@@ -51,7 +51,7 @@ export default function DayWorkoutView({
   const currentDay: WorkoutDay =
     WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
 
-  // 1. Load saved sets on initial mount (persists up to 18 hours)
+  // 1. Load saved sets on initial mount (persists up to 16 hours of inactivity)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -71,7 +71,24 @@ export default function DayWorkoutView({
     }
   }, []);
 
-  // 2. Persist completed sets whenever they are updated
+  // 2. Listen for reset events from Settings modal
+  useEffect(() => {
+    const handleResetEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ dayId?: string }>;
+      if (customEvent.detail?.dayId) {
+        resetDayProgress(customEvent.detail.dayId);
+      } else {
+        setCompletedSets({});
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch {}
+      }
+    };
+    window.addEventListener('nexus_reset_progress', handleResetEvent);
+    return () => window.removeEventListener('nexus_reset_progress', handleResetEvent);
+  }, []);
+
+  // 3. Persist completed sets whenever they are updated
   useEffect(() => {
     if (!isStorageLoaded) return;
     try {

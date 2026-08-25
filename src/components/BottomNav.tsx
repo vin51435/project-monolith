@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dumbbell, Calendar, Moon, TrendingUp, BookOpen, Layers } from 'lucide-react';
+import { Dumbbell, Moon, TrendingUp, Layers, Settings } from 'lucide-react';
 
 interface BottomNavProps {
   activeTab: string;
@@ -11,10 +11,10 @@ interface BottomNavProps {
 export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
   const tabs = [
     { id: 'today', label: 'Workout', icon: Dumbbell },
-    { id: 'schedule', label: '7-Day', icon: Calendar },
     { id: 'night', label: 'Night', icon: Moon },
     { id: 'progression', label: 'Progress', icon: TrendingUp },
     { id: 'library', label: '40 Guides', icon: Layers },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
