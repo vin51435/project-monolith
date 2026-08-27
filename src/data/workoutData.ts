@@ -211,8 +211,9 @@ export const NIGHT_ROUTINE_ITEMS: NightRoutineItem[] = [
   { id: 5, exercise: "Hip mobility", setsReps: "2–3 min", frequency: "Daily", purpose: "Hip movement / recovery" },
   { id: 6, exercise: "Cat-cow", setsReps: "1 × 10–15", frequency: "Daily", purpose: "Spine mobility" },
   { id: 7, exercise: "Light plank", setsReps: "1 × 30–45 sec", frequency: "Daily", purpose: "Core activation" },
-  { id: 8, exercise: "Light crunches", setsReps: "1 × 15–20", frequency: "3–4× / week", purpose: "Ab practice" },
-  { id: 9, exercise: "Light pull-ups", setsReps: "1–2 × 3–5", frequency: "2–3× / week", purpose: "Pull-up technique" },
+  { id: 8, exercise: "Light push-ups", setsReps: "1–2 × 8–15", frequency: "Daily / 3–4× wk", purpose: "Pushing groove & chest/shoulder mobility" },
+  { id: 9, exercise: "Light crunches", setsReps: "1 × 15–20", frequency: "3–4× / week", purpose: "Ab practice" },
+  { id: 10, exercise: "Light pull-ups", setsReps: "1–2 × 3–5", frequency: "2–3× / week", purpose: "Pull-up technique" },
 ];
 
 export const PROGRESSION_METHODS: ProgressionMethod[] = [

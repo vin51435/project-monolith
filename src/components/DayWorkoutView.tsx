@@ -8,7 +8,7 @@ import {
   EXERCISE_DATABASE,
   ExerciseDetail
 } from '@/data/workoutData';
-import { formatLocalDateKey } from '@/components/WorkoutCalendarView';
+import { formatLocalDateKey, WorkoutHistoryEntry, HISTORY_STORAGE_KEY } from '@/components/WorkoutCalendarView';
 import ExerciseImage from '@/components/ExerciseImage';
 import {
   CheckCircle2,
@@ -42,6 +42,7 @@ export default function DayWorkoutView({
 
   // Store completed sets: key format `dayId-exerciseNum-setIndex`
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
+  const [workoutHistory, setWorkoutHistory] = useState<Record<string, WorkoutHistoryEntry>>({});
   const [isStorageLoaded, setIsStorageLoaded] = useState<boolean>(false);
   
   // Track which exercise cards are expanded inline
@@ -53,26 +54,52 @@ export default function DayWorkoutView({
   const currentDay: WorkoutDay =
     WORKOUT_DAYS.find((d) => d.id === selectedDayId) || WORKOUT_DAYS[0];
 
+  // Helper to fetch the latest logged history entry for a given day
+  const getLatestHistoryEntry = React.useCallback(
+    (dayId: string) => {
+      const entries = Object.values(workoutHistory).filter((h) => h.dayId === dayId);
+      if (entries.length === 0) return null;
+      return entries.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      )[0];
+    },
+    [workoutHistory]
+  );
+
+  const isSetDone = React.useCallback(
+    (dayId: string, exNum: number, setIdx: number) => {
+      const key = `${dayId}-${exNum}-${setIdx}`;
+      if (completedSets[key] !== undefined) {
+        return !!completedSets[key];
+      }
+      const latestLog = getLatestHistoryEntry(dayId);
+      if (latestLog && latestLog.completedSetsCount >= latestLog.totalSetsCount) {
+        return true;
+      }
+      return false;
+    },
+    [completedSets, getLatestHistoryEntry]
+  );
+
   const resetDayProgress = React.useCallback((dayId: string) => {
     setCompletedSets((prev) => {
       const next = { ...prev };
-      Object.keys(next).forEach((k) => {
-        if (k.startsWith(`${dayId}-`)) {
-          delete next[k];
-        }
-      });
+      const targetDay = WORKOUT_DAYS.find((d) => d.id === dayId);
+      if (targetDay?.exercises) {
+        targetDay.exercises.forEach((ex) => {
+          for (let i = 0; i < ex.sets; i++) {
+            next[`${dayId}-${ex.num}-${i}`] = false;
+          }
+        });
+      }
       try {
-        if (Object.keys(next).length === 0) {
-          localStorage.removeItem(STORAGE_KEY);
-        } else {
-          localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-              timestamp: Date.now(),
-              sets: next,
-            })
-          );
-        }
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            timestamp: Date.now(),
+            sets: next,
+          })
+        );
       } catch {
         // Ignore storage errors
       }
@@ -80,18 +107,38 @@ export default function DayWorkoutView({
     });
   }, []);
 
-  const getDayCompletedCount = React.useCallback((day: WorkoutDay) => {
-    if (day.isRest || !day.exercises) return 0;
-    let count = 0;
-    day.exercises.forEach((ex) => {
-      for (let i = 0; i < ex.sets; i++) {
-        if (completedSets[`${day.id}-${ex.num}-${i}`]) {
-          count++;
+  const getDayCompletedCount = React.useCallback(
+    (day: WorkoutDay) => {
+      if (day.isRest || !day.exercises) return 0;
+      let activeCheckedCount = 0;
+      let hasExplicitEntry = false;
+
+      day.exercises.forEach((ex) => {
+        for (let i = 0; i < ex.sets; i++) {
+          const key = `${day.id}-${ex.num}-${i}`;
+          if (completedSets[key] !== undefined) {
+            hasExplicitEntry = true;
+            if (completedSets[key]) {
+              activeCheckedCount++;
+            }
+          }
         }
+      });
+
+      if (hasExplicitEntry) {
+        return activeCheckedCount;
       }
-    });
-    return count;
-  }, [completedSets]);
+
+      // Check if this day was logged in calendar history (e.g. yesterday, day before)
+      const latestLog = getLatestHistoryEntry(day.id);
+      if (latestLog) {
+        return latestLog.completedSetsCount;
+      }
+
+      return 0;
+    },
+    [completedSets, getLatestHistoryEntry]
+  );
 
   const getDayTotalSets = React.useCallback((day: WorkoutDay) => {
     if (day.isRest || !day.exercises) return 0;
@@ -111,7 +158,7 @@ export default function DayWorkoutView({
     [completedSetsCount, totalSetsCount]
   );
 
-  // 1. Load saved sets on initial mount (persists up to 16 hours of inactivity)
+  // 1. Load saved sets and calendar history on initial mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -124,6 +171,11 @@ export default function DayWorkoutView({
           localStorage.removeItem(STORAGE_KEY);
         }
       }
+
+      const rawHist = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (rawHist) {
+        setWorkoutHistory(JSON.parse(rawHist));
+      }
     } catch {
       // Ignore storage read errors
     } finally {
@@ -131,7 +183,7 @@ export default function DayWorkoutView({
     }
   }, []);
 
-  // 2. Listen for reset / complete events from Settings
+  // 2. Listen for reset / complete / history events
   useEffect(() => {
     const handleResetEvent = (e: Event) => {
       const customEvent = e as CustomEvent<{ dayId?: string; action?: string }>;
@@ -141,14 +193,18 @@ export default function DayWorkoutView({
           const parsed = JSON.parse(raw);
           if (parsed.sets) {
             setCompletedSets(parsed.sets);
-            return;
           }
+        }
+
+        const rawHist = localStorage.getItem(HISTORY_STORAGE_KEY);
+        if (rawHist) {
+          setWorkoutHistory(JSON.parse(rawHist));
         }
       } catch {}
 
-      if (customEvent.detail?.dayId) {
+      if (customEvent.detail?.dayId && customEvent.detail?.action !== 'manual_log' && customEvent.detail?.action !== 'log_done') {
         resetDayProgress(customEvent.detail.dayId);
-      } else {
+      } else if (!customEvent.detail?.dayId && customEvent.detail?.action !== 'manual_log') {
         setCompletedSets({});
         try {
           localStorage.removeItem(STORAGE_KEY);
@@ -252,12 +308,29 @@ export default function DayWorkoutView({
     exName: string
   ) => {
     const key = `${dayId}-${exNum}-${setIndex}`;
-    const willBeChecked = !completedSets[key];
+    const currentlyDone = isSetDone(dayId, exNum, setIndex);
+    const willBeChecked = !currentlyDone;
 
-    setCompletedSets((prev) => ({
-      ...prev,
-      [key]: willBeChecked,
-    }));
+    setCompletedSets((prev) => {
+      const next = { ...prev };
+      const latestLog = getLatestHistoryEntry(dayId);
+      if (latestLog && latestLog.completedSetsCount >= latestLog.totalSetsCount) {
+        const targetDay = WORKOUT_DAYS.find((d) => d.id === dayId);
+        if (targetDay?.exercises) {
+          targetDay.exercises.forEach((ex) => {
+            for (let i = 0; i < ex.sets; i++) {
+              const k = `${dayId}-${ex.num}-${i}`;
+              if (next[k] === undefined) {
+                next[k] = true;
+              }
+            }
+          });
+        }
+      }
+
+      next[key] = willBeChecked;
+      return next;
+    });
 
     // If newly completed, parse rest seconds and offer/auto-start timer
     if (willBeChecked) {
@@ -265,7 +338,7 @@ export default function DayWorkoutView({
       const restSec = match ? parseInt(match[1], 10) : 60;
       onOpenTimer(restSec, exName, true, true);
     }
-  }, [completedSets, onOpenTimer]);
+  }, [isSetDone, getLatestHistoryEntry, onOpenTimer]);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -588,8 +661,7 @@ export default function DayWorkoutView({
                     }`}
                   >
                     {Array.from({ length: ex.sets }).map((_, setIdx) => {
-                      const setKey = `${currentDay.id}-${ex.num}-${setIdx}`;
-                      const isDone = !!completedSets[setKey];
+                      const isDone = isSetDone(currentDay.id, ex.num, setIdx);
 
                       return (
                         <button

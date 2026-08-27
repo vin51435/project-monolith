@@ -146,6 +146,34 @@ export default function WorkoutCalendarView() {
 
     const updated = { ...history, [selectedDateStr]: newEntry };
     saveHistory(updated);
+
+    try {
+      const STORAGE_KEY = 'nexus_completed_sets_v1';
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : { sets: {} };
+      const currentSets = parsed.sets || {};
+      if (targetDay.exercises) {
+        targetDay.exercises.forEach((ex) => {
+          for (let i = 0; i < ex.sets; i++) {
+            currentSets[`${targetDay.id}-${ex.num}-${i}`] = true;
+          }
+        });
+      }
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          timestamp: Date.now(),
+          sets: currentSets,
+        })
+      );
+    } catch {}
+
+    window.dispatchEvent(
+      new CustomEvent('nexus_reset_progress', {
+        detail: { dayId: targetDay.id, action: 'manual_log' },
+      })
+    );
+
     setShowManualLogModal(false);
   }, [manualDayId, selectedDateStr, history, saveHistory]);
 
@@ -154,6 +182,12 @@ export default function WorkoutCalendarView() {
       const updated = { ...history };
       delete updated[dateKey];
       saveHistory(updated);
+
+      window.dispatchEvent(
+        new CustomEvent('nexus_reset_progress', {
+          detail: { action: 'delete_log' },
+        })
+      );
     }
   }, [history, saveHistory]);
 
