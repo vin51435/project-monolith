@@ -205,15 +205,16 @@ export const WORKOUT_DAYS: WorkoutDay[] = [
 
 export const NIGHT_ROUTINE_ITEMS: NightRoutineItem[] = [
   { id: 1, exercise: "Easy walk", setsReps: "10–20 min", frequency: "Daily", purpose: "General activity, recovery" },
-  { id: 2, exercise: "Dead hang", setsReps: "1–2 × 20–30 sec", frequency: "Daily", purpose: "Grip, shoulder movement" },
+  { id: 2, exercise: "Dead hang + Hanging knee/leg raises", setsReps: "1–2 × 20–30s hang + 6–10 raises", frequency: "Daily", purpose: "Grip, shoulder decompression & lower abs" },
   { id: 3, exercise: "Chin tucks", setsReps: "2 × 10–15", frequency: "Daily", purpose: "Neck / posture" },
   { id: 4, exercise: "Shoulder circles", setsReps: "1 × 10 each dir", frequency: "Daily", purpose: "Shoulder mobility" },
   { id: 5, exercise: "Hip mobility", setsReps: "2–3 min", frequency: "Daily", purpose: "Hip movement / recovery" },
   { id: 6, exercise: "Cat-cow", setsReps: "1 × 10–15", frequency: "Daily", purpose: "Spine mobility" },
-  { id: 7, exercise: "Light plank", setsReps: "1 × 30–45 sec", frequency: "Daily", purpose: "Core activation" },
-  { id: 8, exercise: "Light push-ups", setsReps: "1–2 × 8–15", frequency: "Daily / 3–4× wk", purpose: "Pushing groove & chest/shoulder mobility" },
-  { id: 9, exercise: "Light crunches", setsReps: "1 × 15–20", frequency: "3–4× / week", purpose: "Ab practice" },
-  { id: 10, exercise: "Light pull-ups", setsReps: "1–2 × 3–5", frequency: "2–3× / week", purpose: "Pull-up technique" },
+  { id: 7, exercise: "Light plank", setsReps: "1 × 30–45 sec", frequency: "Daily", purpose: "Front core activation" },
+  { id: 8, exercise: "Light side planks (both sides)", setsReps: "1 × 20–30 sec / side", frequency: "Daily / 3–4× wk", purpose: "Obliques & waistline tightening" },
+  { id: 9, exercise: "Light push-ups", setsReps: "1–2 × 8–15", frequency: "Daily / 3–4× wk", purpose: "Pushing groove & chest/shoulder mobility" },
+  { id: 10, exercise: "Light crunches", setsReps: "1 × 15–20", frequency: "3–4× / week", purpose: "Ab practice" },
+  { id: 11, exercise: "Light pull-ups", setsReps: "1–2 × 3–5", frequency: "2–3× / week", purpose: "Pull-up technique" },
 ];
 
 export const PROGRESSION_METHODS: ProgressionMethod[] = [

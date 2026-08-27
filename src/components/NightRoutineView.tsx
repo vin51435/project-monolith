@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NIGHT_ROUTINE_ITEMS, NightRoutineItem } from '@/data/workoutData';
+import { formatLocalDateKey } from '@/components/WorkoutCalendarView';
 import {
   Moon,
   Sparkles,
@@ -14,17 +15,61 @@ import {
 } from 'lucide-react';
 
 export default function NightRoutineView() {
+  const STORAGE_KEY = 'nexus_night_routine_v1';
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+  // 1. Load saved night routine on mount, automatically clearing when a new day starts
+  useEffect(() => {
+    try {
+      const todayStr = formatLocalDateKey(new Date());
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Only restore if the saved checklist belongs to today's local date
+        if (parsed.date === todayStr && parsed.items && typeof parsed.items === 'object') {
+          setCheckedItems(parsed.items);
+        } else {
+          // New day has begun: automatically clear yesterday's checklist
+          localStorage.removeItem(STORAGE_KEY);
+          setCheckedItems({});
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
 
   const toggleCheck = (id: number) => {
-    setCheckedItems((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setCheckedItems((prev) => {
+      const next = {
+        ...prev,
+        [id]: !prev[id],
+      };
+      try {
+        const todayStr = formatLocalDateKey(new Date());
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            date: todayStr,
+            timestamp: Date.now(),
+            items: next,
+          })
+        );
+      } catch {
+        // Ignore storage write errors
+      }
+      return next;
+    });
   };
 
   const resetNightRoutine = () => {
     setCheckedItems({});
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
   };
 
   const completedCount = Object.values(checkedItems).filter(Boolean).length;

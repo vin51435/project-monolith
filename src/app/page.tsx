@@ -7,12 +7,57 @@ import DayWorkoutView from '@/components/DayWorkoutView';
 import AuthLock from '@/components/AuthLock';
 import Footer from '@/components/Footer';
 import { ExerciseDetail, WORKOUT_DAYS, EXERCISE_DATABASE } from '@/data/workoutData';
+import { formatLocalDateKey, WorkoutHistoryEntry, HISTORY_STORAGE_KEY } from '@/components/WorkoutCalendarView';
 
 import NightRoutineView from '@/components/NightRoutineView';
 import ProgressionView from '@/components/ProgressionView';
 import ExerciseLibraryView from '@/components/ExerciseLibraryView';
 import SettingsView from '@/components/SettingsView';
 import WorkoutTimerModal from '@/components/WorkoutTimerModal';
+
+// Helper to determine the next training day in sequence based on completed workout logs
+const getAutoRecommendedDayId = (): string => {
+  try {
+    const todayStr = formatLocalDateKey(new Date());
+    const savedDayId = sessionStorage.getItem('nexus_selected_day_id');
+    const savedDayDate = sessionStorage.getItem('nexus_selected_day_date');
+
+    // If user explicitly picked a day today in the current active session, keep it
+    if (savedDayId && savedDayDate === todayStr) {
+      return savedDayId;
+    }
+
+    const rawHist = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!rawHist) return 'day-1';
+
+    const history: Record<string, WorkoutHistoryEntry> = JSON.parse(rawHist);
+    const entries = Object.values(history).filter(
+      (h) => h.completedSetsCount >= h.totalSetsCount || h.completedSetsCount >= 10
+    );
+
+    if (entries.length === 0) return 'day-1';
+
+    // Sort descending by date & timestamp to find latest completed routine
+    entries.sort(
+      (a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime() ||
+        b.timestamp - a.timestamp
+    );
+
+    const lastLog = entries[0];
+
+    // If the last completed workout was logged on a previous day,
+    // automatically advance to the next workout in the 7-day PPL sequence!
+    if (lastLog.date !== todayStr) {
+      const nextDayNumber = (lastLog.dayNumber % 7) + 1;
+      return `day-${nextDayNumber}`;
+    }
+
+    return lastLog.dayId || 'day-1';
+  } catch {
+    return 'day-1';
+  }
+};
 
 export default function HomePage() {
   const [authState, setAuthState] = useState<'checking' | 'unlocked' | 'locked'>('checking');
@@ -52,11 +97,9 @@ export default function HomePage() {
         setActiveTab(savedTab);
       }
 
-      // Restore selected workout day
-      const savedDayId = sessionStorage.getItem('nexus_selected_day_id');
-      if (savedDayId) {
-        setSelectedDayId(savedDayId);
-      }
+      // Automatically determine and select the appropriate workout day
+      const autoDayId = getAutoRecommendedDayId();
+      setSelectedDayId(autoDayId);
 
       // Restore selected exercise detail if opened in library
       const savedExNum = sessionStorage.getItem('nexus_selected_exercise_num');
@@ -72,34 +115,20 @@ export default function HomePage() {
     }
   }, []);
 
-  // 2. Persist & Restore Scroll Position on reload
+  const isSwitchingTabRef = React.useRef<boolean>(false);
+
+  // 2. Persist & Restore Scroll Position per tab
   useEffect(() => {
-    const savedScroll = sessionStorage.getItem('nexus_scroll_y');
-    if (savedScroll) {
-      const scrollY = parseInt(savedScroll, 10);
-      if (!isNaN(scrollY) && scrollY > 0) {
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            window.scrollTo({ top: scrollY, behavior: 'instant' as ScrollBehavior });
-          }, 80);
-        });
-      }
-    }
-
     const handleScroll = () => {
-      sessionStorage.setItem('nexus_scroll_y', String(window.scrollY));
-    };
-
-    const handleBeforeUnload = () => {
-      sessionStorage.setItem('nexus_scroll_y', String(window.scrollY));
+      if (isSwitchingTabRef.current) return;
+      try {
+        sessionStorage.setItem(`nexus_scroll_${activeTab}`, String(window.scrollY));
+      } catch {}
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [activeTab]);
 
@@ -110,25 +139,54 @@ export default function HomePage() {
   };
 
   const handleTabChange = (tab: string, shouldScrollToTop: boolean = false) => {
+    // 1. Save current tab's scroll position before leaving
+    try {
+      sessionStorage.setItem(`nexus_scroll_${activeTab}`, String(window.scrollY));
+    } catch {}
+
+    // 2. Lock scroll listener during transition
+    isSwitchingTabRef.current = true;
+
+    // 3. Determine target scroll position (0 if unvisited or explicitly scrolling to top)
+    let targetY = 0;
+    if (!shouldScrollToTop) {
+      try {
+        const saved = sessionStorage.getItem(`nexus_scroll_${tab}`);
+        if (saved) {
+          targetY = Math.max(0, parseInt(saved, 10) || 0);
+        }
+      } catch {}
+    }
+
     setActiveTab(tab);
     try {
       sessionStorage.setItem('nexus_active_tab', tab);
     } catch {}
+
     if (tab !== 'library') {
       setSelectedExerciseDetail(null);
       try {
         sessionStorage.removeItem('nexus_selected_exercise_num');
       } catch {}
     }
-    if (shouldScrollToTop) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+
+    // 4. Scroll window to target position (0 if fresh/unvisited tab, exact Y if visited)
+    window.scrollTo({ top: targetY, behavior: 'instant' as ScrollBehavior });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: targetY, behavior: 'instant' as ScrollBehavior });
+      setTimeout(() => {
+        window.scrollTo({ top: targetY, behavior: 'instant' as ScrollBehavior });
+        isSwitchingTabRef.current = false;
+      }, 50);
+    });
   };
 
   const handleDaySelect = (dayId: string) => {
     setSelectedDayId(dayId);
     try {
+      const todayStr = formatLocalDateKey(new Date());
       sessionStorage.setItem('nexus_selected_day_id', dayId);
+      sessionStorage.setItem('nexus_selected_day_date', todayStr);
     } catch {}
   };
 

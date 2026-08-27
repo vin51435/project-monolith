@@ -33,9 +33,45 @@ export default function ExerciseLibraryView({
   onBackToWorkout,
   currentWorkoutDayName = 'Workout',
 }: ExerciseLibraryViewProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'all' | 'push' | 'pull' | 'legs-core' | 'daily'>('all');
+  // Initialize search and category filter from sessionStorage
+  const [searchQuery, setSearchQuery] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem('nexus_library_search') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [activeCategory, setActiveCategory] = useState<'all' | 'push' | 'pull' | 'legs-core' | 'daily'>(() => {
+    try {
+      return (sessionStorage.getItem('nexus_library_category') as any) || 'all';
+    } catch {
+      return 'all';
+    }
+  });
+
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    try {
+      sessionStorage.setItem('nexus_library_search', val);
+    } catch {}
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    try {
+      sessionStorage.removeItem('nexus_library_search');
+    } catch {}
+  };
+
+  const handleCategoryChange = (cat: 'all' | 'push' | 'pull' | 'legs-core' | 'daily') => {
+    setActiveCategory(cat);
+    try {
+      sessionStorage.setItem('nexus_library_category', cat);
+    } catch {}
+  };
 
   const categories = [
     { id: 'all', label: 'All (40)' },
@@ -77,9 +113,11 @@ export default function ExerciseLibraryView({
     });
   }, [searchQuery, activeCategory, selectedExercise]);
 
-  // Scroll to top on single exercise change
+  // Scroll to top when an individual exercise detail is opened
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (selectedExercise) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, [selectedExercise]);
 
   return (
@@ -119,16 +157,26 @@ export default function ExerciseLibraryView({
       {/* 2. Filter & Search Controls (Only shown when browsing all) */}
       {!selectedExercise && (
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-lg space-y-3">
-          {/* Search Input */}
+          {/* Search Input with Clear Button */}
           <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search by exercise name, muscle, or cue..."
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-2xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Category Chips with Visible Horizontal Scrollbar */}
@@ -136,7 +184,7 @@ export default function ExerciseLibraryView({
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setActiveCategory(cat.id as typeof activeCategory)}
+                onClick={() => handleCategoryChange(cat.id as typeof activeCategory)}
                 className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
                   activeCategory === cat.id
                     ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-600/30'
