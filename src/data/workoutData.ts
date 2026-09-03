@@ -99,8 +99,8 @@ export const WORKOUT_DAYS: WorkoutDay[] = [
     id: "day-2",
     dayNumber: 2,
     title: "Pull A",
-    subtitle: "Back + Biceps + Rear Delts + Grip",
-    focus: "Vertical Pulling & Back Thickness",
+    subtitle: "Back + Biceps + Rear Delts + Traps",
+    focus: "Vertical Pulling, Back Thickness & Upper Traps",
     color: "from-emerald-600 to-teal-700",
     exercises: [
       { num: 1, name: "Pull-Ups", sets: 4, reps: "4–10", rest: "90–120 sec", target: "Lats, upper back, biceps", exerciseId: 12 },
@@ -109,9 +109,10 @@ export const WORKOUT_DAYS: WorkoutDay[] = [
       { num: 4, name: "Bent-Over Rear Delt Fly", sets: 3, reps: "15–25", rest: "45 sec", target: "Rear delts, upper back", exerciseId: 15 },
       { num: 5, name: "Dumbbell Curls", sets: 3, reps: "12–20", rest: "60 sec", target: "Biceps", exerciseId: 16 },
       { num: 6, name: "Hammer Curls", sets: 2, reps: "12–20", rest: "60 sec", target: "Brachialis, forearms", exerciseId: 17 },
-      { num: 7, name: "Dead Hang", sets: 2, reps: "20–45 sec", rest: "60 sec", target: "Grip, forearms", exerciseId: 40 },
+      { num: 7, name: "Dumbbell Shrugs", sets: 3, reps: "15–25", rest: "45–60 sec", target: "Upper traps, neck support", exerciseId: 43 },
+      { num: 8, name: "Dumbbell Wide-Grip Upright Row", sets: 3, reps: "12–20", rest: "60 sec", target: "Side delts, upper traps, upper back", exerciseId: 44 },
     ],
-    techniqueTip: "Pull-up Progression: If you can already do 10+ clean reps, use a slower descent (3 sec) or pause at the top.",
+    techniqueTip: "Pull-up Progression: If you can already do 10+ clean reps, use a slower descent (3 sec). For Upright Rows, keep grip wide and stop at mid-chest level.",
   },
   {
     id: "day-3",
@@ -1025,5 +1026,41 @@ export const EXERCISE_DATABASE: ExerciseDetail[] = [
       "Pause for 1 second at the peak to squeeze the front deltoids, then lower under strict control for 2–3 seconds."
     ],
     cue: "Pour the weight outward and forward. Do not swing your hips or arch your lower back—keep your torso locked like stone and isolate the front cap of the shoulder."
+  },
+  {
+    num: 43,
+    name: "Dumbbell Shrugs",
+    tag: "Pull A / Upper Trapezius Hypertrophy",
+    category: "pull",
+    categoryLabel: "Pull Movements (Back, Biceps, Rear Delts & Traps)",
+    image: "/exercise images/dumbbell-shrugs.jpg",
+    primary: "Upper Trapezius, Levator Scapulae",
+    secondary: "Middle Trapezius, Rhomboids, Forearm Grip",
+    steps: [
+      "Stand tall with feet shoulder-width apart, holding 6 kg dumbbells at your sides with palms facing your thighs.",
+      "Keep your arms completely straight with a micro-bend in the elbows to protect the joints.",
+      "Elevate your shoulder blades straight up toward your ears in a pure vertical line—do NOT roll your shoulders.",
+      "Hold a hard 2-second peak contraction at the very top, driving your traps toward your ears.",
+      "Lower the dumbbells under strict control for 3 seconds until you feel a deep stretch in the upper traps and neck."
+    ],
+    cue: "Shrug straight up as if trying to touch your traps to your ears. Never roll your shoulders backward—elevate strictly vertically with a hard 2-second peak hold."
+  },
+  {
+    num: 44,
+    name: "Dumbbell Wide-Grip Upright Row",
+    tag: "Pull A / Upper Back, Traps & Side Delts",
+    category: "pull",
+    categoryLabel: "Pull Movements (Back, Biceps, Rear Delts & Traps)",
+    image: "/exercise images/Dumbbell wide-grip upright row.jpg",
+    primary: "Lateral Deltoids (Side Shoulders), Upper & Middle Trapezius",
+    secondary: "Rhomboids, Biceps, Forearms",
+    steps: [
+      "Stand tall with feet shoulder-width apart, holding 6 kg dumbbells resting against the front of your thighs with an overhand wide grip.",
+      "Keep dumbbells spaced roughly shoulder-width or slightly wider apart (never let them touch in the middle to protect rotator cuffs).",
+      "Pull the dumbbells vertically up along the front of your torso, leading with your elbows flared high and wide.",
+      "Stop when the dumbbells reach lower-to-mid chest height (elbows at or slightly below shoulder level—never yank up to your chin).",
+      "Pause for 1 second at the peak to feel the traps and side delts contract, then lower slowly for 2–3 seconds."
+    ],
+    cue: "Lead with your elbows high and wide, keeping hands spaced apart. Stop at mid-chest level—this delivers maximum trap and delt activation while keeping the rotator cuff 100% safe."
   }
 ];

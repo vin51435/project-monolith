@@ -176,66 +176,94 @@ export default function SettingsView({
 
   const handleResetToday = () => {
     try {
+      const todayStr = formatLocalDateKey(new Date());
       const STORAGE_KEY = "nexus_completed_sets_v1";
+      const HISTORY_KEY = "nexus_workout_history_v1";
+
+      // 1. Explicitly mark all sets for currentDayId as false
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.sets) {
-          const nextSets: Record<string, boolean> = {};
-          Object.keys(parsed.sets).forEach((k) => {
-            if (!k.startsWith(`${currentDayId}-`)) {
-              nextSets[k] = parsed.sets[k];
-            }
-          });
-          if (Object.keys(nextSets).length === 0) {
-            localStorage.removeItem(STORAGE_KEY);
-          } else {
-            localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify({
-                timestamp: Date.now(),
-                sets: nextSets,
-              }),
-            );
+      const parsed = raw ? JSON.parse(raw) : { sets: {} };
+      const nextSets: Record<string, boolean> = { ...(parsed.sets || {}) };
+
+      const targetDay =
+        WORKOUT_DAYS.find((d) => d.id === currentDayId) || WORKOUT_DAYS[0];
+      if (targetDay?.exercises) {
+        targetDay.exercises.forEach((ex) => {
+          for (let i = 0; i < ex.sets; i++) {
+            nextSets[`${currentDayId}-${ex.num}-${i}`] = false;
           }
+        });
+      }
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          timestamp: Date.now(),
+          sets: nextSets,
+        }),
+      );
+
+      // 2. Remove today's workout log from Calendar History
+      const rawHistory = localStorage.getItem(HISTORY_KEY);
+      if (rawHistory) {
+        const history = JSON.parse(rawHistory);
+        if (history[todayStr]) {
+          delete history[todayStr];
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
         }
       }
 
       // Also update storedSetsCount state
-      const updatedRaw = localStorage.getItem("nexus_completed_sets_v1");
-      if (updatedRaw) {
-        const parsed = JSON.parse(updatedRaw);
-        setStoredSetsCount(
-          parsed.sets ? Object.values(parsed.sets).filter(Boolean).length : 0,
-        );
-      } else {
-        setStoredSetsCount(0);
-      }
-    } catch {}
+      setStoredSetsCount(Object.values(nextSets).filter(Boolean).length);
 
-    window.dispatchEvent(
-      new CustomEvent("nexus_reset_progress", {
-        detail: { dayId: currentDayId },
-      }),
-    );
-    setResetFeedback(`Today's sets cleared!`);
-    setTimeout(() => setResetFeedback(null), 3000);
+      // 3. Dispatch global reset event to immediately update DayWorkoutView and WorkoutCalendarView
+      window.dispatchEvent(
+        new CustomEvent("nexus_reset_progress", {
+          detail: { dayId: currentDayId, action: "reset_today", date: todayStr },
+        }),
+      );
+
+      setResetFeedback(`Today's workout progress & calendar log cleared!`);
+      setTimeout(() => setResetFeedback(null), 3000);
+    } catch {}
   };
 
   const handleResetAll = () => {
     if (
       window.confirm(
-        "Are you sure you want to reset all completed sets across all 7 days?",
+        "Are you sure you want to reset all completed sets across all 7 days for a fresh training cycle?",
       )
     ) {
       try {
-        localStorage.removeItem("nexus_completed_sets_v1");
+        const STORAGE_KEY = "nexus_completed_sets_v1";
+        const nextSets: Record<string, boolean> = {};
+        WORKOUT_DAYS.forEach((day) => {
+          if (day.exercises) {
+            day.exercises.forEach((ex) => {
+              for (let i = 0; i < ex.sets; i++) {
+                nextSets[`${day.id}-${ex.num}-${i}`] = false;
+              }
+            });
+          }
+        });
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            timestamp: Date.now(),
+            sets: nextSets,
+          }),
+        );
+        sessionStorage.removeItem("nexus_selected_day_id");
+        sessionStorage.removeItem("nexus_selected_day_date");
       } catch {}
+
       window.dispatchEvent(
-        new CustomEvent("nexus_reset_progress", { detail: {} }),
+        new CustomEvent("nexus_reset_progress", {
+          detail: { action: "reset_all" },
+        }),
       );
       setStoredSetsCount(0);
-      setResetFeedback("All 7-day progress reset!");
+      setResetFeedback("All 7 days reset! Ready for a fresh training cycle.");
       setTimeout(() => setResetFeedback(null), 3000);
     }
   };
@@ -265,11 +293,13 @@ export default function SettingsView({
         </div>
       </div>
 
-      {/* Feedback Toast */}
+      {/* Floating Zero-Layout-Shift Feedback Toast */}
       {resetFeedback && (
-        <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-950/80 border border-emerald-700 text-emerald-300 text-xs sm:text-sm font-bold shadow-lg animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
-          <span>{resetFeedback}</span>
+        <div className="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-[92%] max-w-md">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-900/95 border border-emerald-500/60 text-emerald-300 text-xs sm:text-sm font-bold shadow-2xl shadow-black/80 backdrop-blur-xl animate-fadeIn">
+            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+            <span className="leading-snug">{resetFeedback}</span>
+          </div>
         </div>
       )}
 

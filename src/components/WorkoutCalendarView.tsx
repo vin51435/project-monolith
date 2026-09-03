@@ -46,16 +46,24 @@ export default function WorkoutCalendarView() {
   const [showManualLogModal, setShowManualLogModal] = useState<boolean>(false);
   const [manualDayId, setManualDayId] = useState<string>('day-1');
 
-  // Load history on mount
+  // Load history on mount and listen for real-time progress/reset updates
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
-      if (raw) {
-        setHistory(JSON.parse(raw));
+    const loadHistory = () => {
+      try {
+        const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+        if (raw) {
+          setHistory(JSON.parse(raw));
+        } else {
+          setHistory({});
+        }
+      } catch {
+        // Ignore storage errors
       }
-    } catch {
-      // Ignore storage errors
-    }
+    };
+
+    loadHistory();
+    window.addEventListener('nexus_reset_progress', loadHistory);
+    return () => window.removeEventListener('nexus_reset_progress', loadHistory);
   }, []);
 
   // Save history helper

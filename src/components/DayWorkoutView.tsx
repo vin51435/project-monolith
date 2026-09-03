@@ -19,6 +19,7 @@ import {
   Lightbulb,
   Sparkles,
   RefreshCw,
+  RotateCcw,
   BookOpen,
   ChevronDown,
   ChevronUp,
@@ -107,6 +108,45 @@ export default function DayWorkoutView({
     });
   }, []);
 
+  const handleResetWeek = React.useCallback(() => {
+    if (
+      window.confirm(
+        "Start a new training week? This will clear active set checkboxes across all 7 days so you can start Day 1 fresh."
+      )
+    ) {
+      setCompletedSets((prev) => {
+        const next: Record<string, boolean> = {};
+        WORKOUT_DAYS.forEach((day) => {
+          if (day.exercises) {
+            day.exercises.forEach((ex) => {
+              for (let i = 0; i < ex.sets; i++) {
+                next[`${day.id}-${ex.num}-${i}`] = false;
+              }
+            });
+          }
+        });
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              timestamp: Date.now(),
+              sets: next,
+            })
+          );
+          sessionStorage.setItem('nexus_selected_day_id', 'day-1');
+          sessionStorage.setItem('nexus_selected_day_date', formatLocalDateKey(new Date()));
+        } catch {}
+        return next;
+      });
+      setSelectedDayId('day-1');
+      window.dispatchEvent(
+        new CustomEvent('nexus_reset_progress', {
+          detail: { action: 'reset_all' },
+        })
+      );
+    }
+  }, [setSelectedDayId]);
+
   const getDayCompletedCount = React.useCallback(
     (day: WorkoutDay) => {
       if (day.isRest || !day.exercises) return 0;
@@ -186,7 +226,7 @@ export default function DayWorkoutView({
   // 2. Listen for reset / complete / history events
   useEffect(() => {
     const handleResetEvent = (e: Event) => {
-      const customEvent = e as CustomEvent<{ dayId?: string; action?: string }>;
+      const customEvent = e as CustomEvent<{ dayId?: string; action?: string; date?: string }>;
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
@@ -199,16 +239,27 @@ export default function DayWorkoutView({
         const rawHist = localStorage.getItem(HISTORY_STORAGE_KEY);
         if (rawHist) {
           setWorkoutHistory(JSON.parse(rawHist));
+        } else {
+          setWorkoutHistory({});
         }
       } catch {}
 
-      if (customEvent.detail?.dayId && customEvent.detail?.action !== 'manual_log' && customEvent.detail?.action !== 'log_done') {
+      if (customEvent.detail?.action === 'reset_today' && customEvent.detail?.dayId) {
         resetDayProgress(customEvent.detail.dayId);
-      } else if (!customEvent.detail?.dayId && customEvent.detail?.action !== 'manual_log') {
-        setCompletedSets({});
-        try {
-          localStorage.removeItem(STORAGE_KEY);
-        } catch {}
+      } else if (customEvent.detail?.action === 'reset_all') {
+        const next: Record<string, boolean> = {};
+        WORKOUT_DAYS.forEach((day) => {
+          if (day.exercises) {
+            day.exercises.forEach((ex) => {
+              for (let i = 0; i < ex.sets; i++) {
+                next[`${day.id}-${ex.num}-${i}`] = false;
+              }
+            });
+          }
+        });
+        setCompletedSets(next);
+      } else if (customEvent.detail?.dayId && customEvent.detail?.action !== 'manual_log' && customEvent.detail?.action !== 'log_done') {
+        resetDayProgress(customEvent.detail.dayId);
       }
     };
     window.addEventListener('nexus_reset_progress', handleResetEvent);
@@ -328,7 +379,22 @@ export default function DayWorkoutView({
         }
       }
 
-      next[key] = willBeChecked;
+      const targetDay = WORKOUT_DAYS.find((d) => d.id === dayId);
+      const targetEx = targetDay?.exercises?.find((e) => e.num === exNum);
+      const totalSetsForEx = targetEx?.sets || 4;
+
+      if (!willBeChecked) {
+        // Cascading Undo: If undoing Set 2 (index 1), also reset Set 3 (index 2) and all subsequent sets!
+        for (let i = setIndex; i < totalSetsForEx; i++) {
+          next[`${dayId}-${exNum}-${i}`] = false;
+        }
+      } else {
+        // Checking Set: Mark this set and all prior sets leading up to it as done
+        for (let i = 0; i <= setIndex; i++) {
+          next[`${dayId}-${exNum}-${i}`] = true;
+        }
+      }
+
       return next;
     });
 
@@ -345,12 +411,24 @@ export default function DayWorkoutView({
       {/* 1. Day Selector Carousel / Pills */}
       <div className="bg-slate-950/80 p-2 sm:p-3 rounded-3xl border border-slate-800 backdrop-blur-md">
         <div className="flex items-center justify-between px-2 mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Select Training Day
-          </span>
-          <span className="text-xs font-semibold text-indigo-400">
-            Day {currentDay.dayNumber} of 7
-          </span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Select Training Day
+            </span>
+            <span className="text-xs font-semibold text-indigo-400">
+              (Day {currentDay.dayNumber} of 7)
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleResetWeek}
+            className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-slate-400 hover:text-amber-300 py-1 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition active:scale-95 shadow-sm"
+            title="Start a new training week / reset 7-day cycle"
+          >
+            <RotateCcw className="w-3 h-3 text-amber-400" />
+            <span>Start New Week</span>
+          </button>
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 sm:gap-2">
           {WORKOUT_DAYS.map((day) => {
