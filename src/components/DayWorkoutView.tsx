@@ -67,6 +67,39 @@ export default function DayWorkoutView({
     [workoutHistory]
   );
 
+  // Determine if a history log belongs to the CURRENT active training week/cycle
+  const isLogFromCurrentCycle = React.useCallback(
+    (log: WorkoutHistoryEntry) => {
+      if (!log || !log.date) return false;
+      const logTime = new Date(log.date).getTime();
+      const nowTime = new Date().setHours(23, 59, 59, 999);
+      const ageInDays = (nowTime - logTime) / (1000 * 60 * 60 * 24);
+
+      // Logs older than 6 days are from a previous week/cycle
+      if (ageInDays > 6) return false;
+
+      // Check if user explicitly started a new week cycle
+      try {
+        const cycleStartDate = localStorage.getItem('nexus_cycle_start_date');
+        if (cycleStartDate && log.date < cycleStartDate) {
+          return false;
+        }
+      } catch {}
+
+      // If this log is for a later day (e.g. Day 6), but Day 1 was logged more recently (new cycle started),
+      // then this Day 6 log is from the previous cycle and must not show as active.
+      const day1Log = getLatestHistoryEntry('day-1');
+      if (day1Log && log.dayNumber > 1) {
+        if (log.date < day1Log.date) {
+          return false;
+        }
+      }
+
+      return true;
+    },
+    [getLatestHistoryEntry]
+  );
+
   const isSetDone = React.useCallback(
     (dayId: string, exNum: number, setIdx: number) => {
       const key = `${dayId}-${exNum}-${setIdx}`;
@@ -74,12 +107,12 @@ export default function DayWorkoutView({
         return !!completedSets[key];
       }
       const latestLog = getLatestHistoryEntry(dayId);
-      if (latestLog && latestLog.completedSetsCount >= latestLog.totalSetsCount) {
+      if (latestLog && isLogFromCurrentCycle(latestLog) && latestLog.completedSetsCount >= latestLog.totalSetsCount) {
         return true;
       }
       return false;
     },
-    [completedSets, getLatestHistoryEntry]
+    [completedSets, getLatestHistoryEntry, isLogFromCurrentCycle]
   );
 
   const resetDayProgress = React.useCallback((dayId: string) => {
@@ -114,6 +147,11 @@ export default function DayWorkoutView({
         "Start a new training week? This will clear active set checkboxes across all 7 days so you can start Day 1 fresh."
       )
     ) {
+      const todayStr = formatLocalDateKey(new Date());
+      try {
+        localStorage.setItem('nexus_cycle_start_date', todayStr);
+      } catch {}
+
       setCompletedSets((prev) => {
         const next: Record<string, boolean> = {};
         WORKOUT_DAYS.forEach((day) => {
@@ -134,7 +172,7 @@ export default function DayWorkoutView({
             })
           );
           sessionStorage.setItem('nexus_selected_day_id', 'day-1');
-          sessionStorage.setItem('nexus_selected_day_date', formatLocalDateKey(new Date()));
+          sessionStorage.setItem('nexus_selected_day_date', todayStr);
         } catch {}
         return next;
       });
@@ -169,15 +207,15 @@ export default function DayWorkoutView({
         return activeCheckedCount;
       }
 
-      // Check if this day was logged in calendar history (e.g. yesterday, day before)
+      // Check if this day was logged in calendar history during the CURRENT cycle
       const latestLog = getLatestHistoryEntry(day.id);
-      if (latestLog) {
+      if (latestLog && isLogFromCurrentCycle(latestLog)) {
         return latestLog.completedSetsCount;
       }
 
       return 0;
     },
-    [completedSets, getLatestHistoryEntry]
+    [completedSets, getLatestHistoryEntry, isLogFromCurrentCycle]
   );
 
   const getDayTotalSets = React.useCallback((day: WorkoutDay) => {
